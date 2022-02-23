@@ -1,1 +1,1 @@
-# backend
+# The Kahoot! League - Backend
