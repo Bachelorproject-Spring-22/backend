@@ -13,7 +13,6 @@ async function bootstrap() {
   // Init express
   const app = express();
   app.use(cookieParser());
-  // Add more as it comes
   if (
     process.env &&
     process.env.NODE_ENV &&
@@ -25,7 +24,7 @@ async function bootstrap() {
   }
   app.use(morgan('dev'));
 
-  const port = process.env.PORT || 5000;
+  const port = process.env.PORT;
   app.listen(port, () => console.log(`Server listening on ${port}`));
 
   app.use((error, _, res, __) =>
