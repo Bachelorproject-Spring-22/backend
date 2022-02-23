@@ -1,5 +1,6 @@
 //cite from webproject
-import { Schema, model } from 'mongoose';
+import mongoose from 'mongoose';
+const { Schema, model } = mongoose;
 
 const refreshTokenSchema = new Schema({
   user: { type: Schema.Types.ObjectId, ref: 'User' },

@@ -1,4 +1,5 @@
-import { Schema, model } from 'mongoose';
+import mongoose from 'mongoose';
+const { Schema, model } = mongoose;
 
 const userSchema = new Schema(
   {
@@ -53,4 +54,4 @@ userSchema.set('toJson', {
   },
 });
 
-module.exports = model('User', userSchema);
+export default model('User', userSchema);

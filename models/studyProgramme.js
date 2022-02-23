@@ -1,4 +1,5 @@
-import { Schema, model } from 'mongoose';
+import mongoose from 'mongoose';
+const { Schema, model } = mongoose;
 
 const studyProgramme = new Schema(
   {
@@ -26,4 +27,4 @@ const studyProgramme = new Schema(
   { timestamps: true },
 );
 
-module.exports = model('studyProgramme', studyProgramme);
+export default model('studyProgramme', studyProgramme);

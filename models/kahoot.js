@@ -1,4 +1,5 @@
-import { Schema, model } from 'mongoose';
+import mongoose from 'mongoose';
+const { Schema, model } = mongoose;
 
 const kahootSchema = new Schema(
   {
@@ -60,4 +61,4 @@ const kahootSchema = new Schema(
   { timestamps: true },
 );
 
-module.exports = model('Kahoot', kahootSchema);
+export default model('Kahoot', kahootSchema);

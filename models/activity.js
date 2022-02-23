@@ -1,4 +1,5 @@
-import { Schema, model } from 'mongoose';
+import mongoose from 'mongoose';
+const { Schema, model } = mongoose;
 
 const activitySchema = new Schema(
   {
@@ -18,4 +19,4 @@ const activitySchema = new Schema(
   { timestamps: true },
 );
 
-module.exports = model('Activity', activitySchema);
+export default model('Activity', activitySchema);
