@@ -8,8 +8,8 @@
 
 import jwt from 'express-jwt';
 const secret = process.env.TOKEN_SECRET;
-import { findById } from '../models/User';
-import { find } from '../models/RefreshToken';
+import '../models/user.js';
+// import { find } from '../models/refreshToken';
 
 export default function authorize(roles = []) {
   if (typeof roles === 'string') {
@@ -28,8 +28,7 @@ export default function authorize(roles = []) {
       }
 
       req.user.role = user.role;
-      req.user.ownsToken = (token) =>
-        !!refreshToken.find((x) => x.token === token);
+      req.user.ownsToken = (token) => !!refreshToken.find((x) => x.token === token);
       next();
     },
   ];
