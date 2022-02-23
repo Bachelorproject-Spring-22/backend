@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
+import { Schema, model } from 'mongoose';
 
-const userSchema = new mongoose.Schema(
+const userSchema = new Schema(
   {
     username: {
       type: 'string',
@@ -53,4 +53,4 @@ userSchema.set('toJson', {
   },
 });
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = model('User', userSchema);

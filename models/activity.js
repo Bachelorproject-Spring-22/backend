@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
+import { Schema, model } from 'mongoose';
 
-const activitySchema = new mongoose.Schema(
+const activitySchema = new Schema(
   {
     name: {
       type: 'string',
@@ -18,4 +18,4 @@ const activitySchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-module.exports = mongoose.model('Activity', activitySchema);
+module.exports = model('Activity', activitySchema);

@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
+import { Schema, model } from 'mongoose';
 
-const studyProgramme = new mongoose.Schema(
+const studyProgramme = new Schema(
   {
     programmeCode: {
       type: 'string',
@@ -26,4 +26,4 @@ const studyProgramme = new mongoose.Schema(
   { timestamps: true },
 );
 
-module.exports = mongoose.model('studyProgramme', studyProgramme);
+module.exports = model('studyProgramme', studyProgramme);

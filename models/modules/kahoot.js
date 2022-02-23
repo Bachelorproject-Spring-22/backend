@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
+import { Schema, model } from 'mongoose';
 
-const kahootSchema = new mongoose.Schema(
+const kahootSchema = new Schema(
   {
     partOfCourse: {
       ref: 'Course',
@@ -60,4 +60,4 @@ const kahootSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-module.exports = mongoose.model('Kahoot', kahootSchema);
+module.exports = model('Kahoot', kahootSchema);

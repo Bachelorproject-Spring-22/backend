@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
+import { Schema, model } from 'mongoose';
 
-const courseSchema = new mongoose.Schema(
+const courseSchema = new Schema(
   {
     code: {
       type: 'string',
@@ -29,4 +29,4 @@ const courseSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-module.exports = mongoose.model('Course', courseSchema);
+module.exports = model('Course', courseSchema);

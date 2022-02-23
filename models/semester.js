@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
+import { Schema, model } from 'mongoose';
 
-const semesterSchema = new mongoose.Schema(
+const semesterSchema = new Schema(
   {
     year: {
       type: 'string',
@@ -27,4 +27,4 @@ const semesterSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-module.exports = mongoose.model('Semester', semesterSchema);
+module.exports = model('Semester', semesterSchema);
