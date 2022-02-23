@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
+import { connectToMongoDB } from './config/mongoose.js ';
 
 dotenv.config();
 /**
@@ -13,23 +14,21 @@ async function bootstrap() {
   // Init express
   const app = express();
   app.use(cookieParser());
-  if (
-    process.env &&
-    process.env.NODE_ENV &&
-    process.env.NODE_ENV !== 'production'
-  ) {
+
+  if (process.env && process.env.NODE_ENV && process.env.NODE_ENV !== 'production') {
     app.use(cors({ credentials: true, origin: process.env.FRONTENDHOST }));
   } else {
     app.use(cors());
   }
   app.use(morgan('dev'));
 
-  const port = process.env.PORT;
-  app.listen(port, () => console.log(`Server listening on ${port}`));
-
-  app.use((error, _, res, __) =>
-    res.status(error.status || 500).json({ error }),
+  app.listen(process.env.PORT, () =>
+    console.log(`Server listening on PORT: ${process.env.PORT} | NODE_ENV: ${process.env.NODE_ENV.toUpperCase()}`),
   );
+
+  app.use((error, _, res, __) => res.status(error.status || 500).json({ error }));
+
+  connectToMongoDB();
 }
 
 bootstrap();
