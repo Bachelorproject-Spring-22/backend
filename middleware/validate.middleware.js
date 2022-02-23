@@ -6,6 +6,8 @@
  * @URL = https://jasonwatmore.com/post/2020/06/17/nodejs-mongodb-api-jwt-authentication-with-refresh-tokens
  */
 
+// Validate request against a JOI schema object
+
 export default function validateRequest(req, next, schema) {
   const options = {
     abortEarly: false,
