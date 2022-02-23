@@ -4,6 +4,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import { connectToMongoDB } from './config/mongoose.js ';
+import authRoute from './routes/authentication.routes.js';
 
 dotenv.config();
 /**
@@ -13,7 +14,10 @@ dotenv.config();
 async function bootstrap() {
   // Init express
   const app = express();
+
+  // Middlewares
   app.use(cookieParser());
+  app.use('/', authRoute);
 
   if (process.env && process.env.NODE_ENV && process.env.NODE_ENV !== 'production') {
     app.use(cors({ credentials: true, origin: process.env.FRONTENDHOST }));
