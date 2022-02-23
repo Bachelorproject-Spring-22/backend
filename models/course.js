@@ -1,0 +1,32 @@
+import mongoose from 'mongoose';
+
+const courseSchema = new mongoose.Schema(
+  {
+    code: {
+      type: 'string',
+      required: true,
+    },
+    name: {
+      type: 'string',
+      required: true,
+    },
+    credits: {
+      type: 'string',
+      required: true,
+    },
+    activities: {
+      type: 'array',
+      ref: 'Activity',
+    },
+    semester: {
+      ref: 'Semester',
+      required: true,
+    },
+    studyPlanCodes: {
+      type: 'array',
+    },
+  },
+  { timestamps: true },
+);
+
+module.exports = mongoose.model('Course', courseSchema);
