@@ -4,7 +4,7 @@ import Joi from 'joi';
 const router = Router();
 
 import '../middleware/authorize.middleware.js';
-import { login } from '../controllers/auth.controllers.js';
+import { login, refreshToken } from '../controllers/auth.controllers.js';
 import validateRequest from '../middleware/validate.middleware.js';
 // const authorize = require('../middleware/authorize.middleware');
 
@@ -26,7 +26,7 @@ router.post('/login', authenticateSchema, login);
 /**
  * POST: Refresh Token
  */
-// router.post('/refresh', auth.refreshToken);
+router.post('/api/refresh', refreshToken);
 
 export default router;
 
