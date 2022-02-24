@@ -4,8 +4,9 @@ import Joi from 'joi';
 const router = Router();
 
 import '../middleware/authorize.middleware.js';
+import { login } from '../controllers/auth.controllers.js';
+import validateRequest from '../middleware/validate.middleware.js';
 // const authorize = require('../middleware/authorize.middleware');
-// const auth = require('../controllers/auth.controller');
 
 router.get('/', (req, res) => {
   res.status(200).json({ error: 'Hello this is a test' });
@@ -14,7 +15,7 @@ router.get('/', (req, res) => {
  * POST: User Login
  * req.body = email, password
  */
-router.post('/login', authenticateSchema);
+router.post('/login', authenticateSchema, login);
 
 /**
  * POST: Revoke token
