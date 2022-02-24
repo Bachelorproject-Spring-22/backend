@@ -8,8 +8,8 @@
 
 import jwt from 'express-jwt';
 const secret = process.env.TOKEN_SECRET;
-import '../models/user.js';
-// import { find } from '../models/refreshToken';
+import userModel from '../models/user.js';
+import refreshTokenModel from '../models/refreshToken.js';
 
 export default function authorize(roles = []) {
   if (typeof roles === 'string') {
@@ -20,8 +20,8 @@ export default function authorize(roles = []) {
     jwt({ secret, algorithms: ['HS256'] }),
 
     async (req, res, next) => {
-      const user = await findById(req.user._id);
-      const refreshToken = await find({ user: user.id });
+      const user = await userModel.findById(req.user._id);
+      const refreshToken = await refreshTokenModel.find({ user: user.id });
 
       if (!user || (roles.length && !roles.includes(user.role))) {
         return res.status(401).json({ error: 'Unauthorized' });

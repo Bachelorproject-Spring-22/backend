@@ -32,7 +32,6 @@ export const createUser = async (req, res) => {
     year,
   });
 
-  console.log(user);
   try {
     await user.save();
     res.status(201).json({ message: 'User created successfully', username, role, email, programmeCode, year });
