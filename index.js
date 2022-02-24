@@ -4,7 +4,9 @@ import cors from 'cors';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import { connectToMongoDB } from './config/mongoose.js ';
+
 import authRoute from './routes/authentication.routes.js';
+import userRoute from './routes/user.routes.js';
 
 dotenv.config();
 /**
@@ -21,7 +23,9 @@ async function bootstrap() {
   // parse request of content-type - application/x-www-form-urlencoded
   app.use(express.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }));
   app.use(cookieParser());
+
   app.use('/', authRoute);
+  app.use('/user', userRoute);
 
   if (process.env && process.env.NODE_ENV && process.env.NODE_ENV !== 'production') {
     app.use(cors({ credentials: true, origin: process.env.FRONTENDHOST }));
