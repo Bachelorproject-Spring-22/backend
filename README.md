@@ -19,4 +19,4 @@ POST /login - user login
 POST /api/refresh - refresh token
 POST /api/revoke - revoke token
 
-POST /user/users - creating a new user
+POST /superAdmin/users - creating a new user
