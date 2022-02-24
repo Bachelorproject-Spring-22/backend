@@ -16,6 +16,10 @@ async function bootstrap() {
   const app = express();
 
   // Middlewares
+  // parse request of content-type - application/json
+  app.use(express.json({ limit: '50mb' }));
+  // parse request of content-type - application/x-www-form-urlencoded
+  app.use(express.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }));
   app.use(cookieParser());
   app.use('/', authRoute);
 
@@ -30,7 +34,7 @@ async function bootstrap() {
     console.log(`Server listening on PORT: ${process.env.PORT} | NODE_ENV: ${process.env.NODE_ENV.toUpperCase()}`),
   );
 
-  app.use((error, _, res, __) => res.status(error.status || 500).json({ error }));
+  app.use((error, _, res, __) => res.status(error.status || 500).json({ error: 'Something went wrong' }));
 
   connectToMongoDB();
 }
