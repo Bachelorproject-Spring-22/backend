@@ -68,6 +68,7 @@ export const refreshToken = async (req, res) => {
   const token = req.cookies.refreshToken;
   const ipAddress = req.ip;
 
+  console.log(token);
   // Generates refresh token using user information and ip address
   // revokes old refresh token (if any)
   // saves new and old refresh token
@@ -103,29 +104,31 @@ export const refreshToken = async (req, res) => {
 // helper functions
 function setTokenCookie(res, token) {
   // Create cookie with refresh token that expires in 7 days
-  let cookieOptions;
-  if (process.env && process.env.NODE_ENV && process.env.NODE_ENV !== 'production') {
-    //@DEPLOYCOOKIE
-    cookieOptions = {
-      httpOnly: true,
-      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      secure: true,
-      sameSite: 'none',
-    };
-  } else {
-    //@DEVELOPMENT
-    cookieOptions = {
-      httpOnly: true,
-      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      secure: false,
-    };
-  }
+  // let cookieOptions;
+  // if (process.env && process.env.NODE_ENV && process.env.NODE_ENV !== 'production') {
+  //   //@DEPLOYCOOKIE
+  //   cookieOptions = {
+  //     httpOnly: true,
+  //     expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  //     secure: true,
+  //     sameSite: 'none',
+  //   };
+  // } else {
+  //@DEVELOPMENT
+  const cookieOptions = {
+    httpOnly: true,
+    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    secure: false,
+    // };
+  };
 
   res.cookie('refreshToken', token, cookieOptions);
 }
 
 async function getRefreshToken(token) {
+  console.log(token);
   const refreshToken = await refreshTokenModel.findOne({ token }).populate('user');
+  console.log(refreshToken);
   if (!refreshToken || !refreshToken.isActive) throw 'Invalid token';
   return refreshToken;
 }
