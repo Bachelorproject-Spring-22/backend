@@ -21,12 +21,12 @@ router.post('/login', authenticateSchema, login);
  * POST: Revoke token
  * Authorize: Restrict access to the route to authenticated users with specified roles
  */
-// router.post('/revoke-token', authorize(), auth.revokeToken);
+// router.post('/revoke', authorize(), auth.revokeToken);
 
 /**
  * POST: Refresh Token
  */
-// router.post('/refresh-token', auth.refreshToken);
+// router.post('/refresh', auth.refreshToken);
 
 export default router;
 
