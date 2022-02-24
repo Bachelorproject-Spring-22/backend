@@ -15,7 +15,7 @@ export const login = async (req, res) => {
   const ipAddress = req.ip;
 
   const user = await userModel.findOne({ username });
-  if (!user || !bcrypt.compareSync(password, userModel.password)) {
+  if (!user || !bcrypt.compareSync(password, user.password)) {
     return res.status(400).json({ error: 'Wrong email and/or password. Please try again.' });
   }
 
