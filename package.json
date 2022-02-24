@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/Bachelorproject-Spring-22/backend#readme",
   "devDependencies": {
+    "bcryptjs": "^2.4.3",
     "express-jwt": "^6.1.1",
     "express-jwt-middleware": "^1.0.3",
     "joi": "^17.6.0",
