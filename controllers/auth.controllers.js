@@ -6,16 +6,16 @@ import crypto from 'crypto';
 
 dotenv.config();
 // Local files
-const RefreshToken = require('../models/refreshToken');
-const User = require('../models/user');
+import refreshTokenModel from '../models/refreshToken.js';
+import userModel from '../models/user.js';
 
 // User login with username and password
 export const login = async (req, res) => {
   const { username, password } = req.body;
   const ipAddress = req.ip;
 
-  const user = await User.findOne({ username });
-  if (!user || !bcrypt.compareSync(password, user.password)) {
+  const user = await userModel.findOne({ username });
+  if (!user || !bcrypt.compareSync(password, userModel.password)) {
     return res.status(400).json({ error: 'Wrong email and/or password. Please try again.' });
   }
 
@@ -64,7 +64,7 @@ export const revokeToken = async (req, res) => {
   }
 };
 
-export const refreshToken = (req, res) => {
+export const refreshToken = async (req, res) => {
   const token = req.cookies.refreshToken;
   const ipAddress = req.ip;
 
@@ -125,7 +125,7 @@ function setTokenCookie(res, token) {
 }
 
 async function getRefreshToken(token) {
-  const refreshToken = await RefreshToken.findOne({ token }).populate('user');
+  const refreshToken = await refreshTokenModel.findOne({ token }).populate('user');
   if (!refreshToken || !refreshToken.isActive) throw 'Invalid token';
   return refreshToken;
 }
@@ -137,7 +137,7 @@ function generateJwtToken(user) {
 }
 
 function generateRefreshToken(user, ipAddress) {
-  return new RefreshToken({
+  return new refreshTokenModel({
     user: user.id,
     token: randomTokenString(),
     expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
