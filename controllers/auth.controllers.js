@@ -117,7 +117,7 @@ function setTokenCookie(res, token) {
   //@DEVELOPMENT
   const cookieOptions = {
     httpOnly: true,
-    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    expires: new Date(Date.now() + process.env.REFRESH_TOKEN_EXP_SEVEN_DAYS),
     secure: false,
     // };
   };
@@ -126,16 +126,15 @@ function setTokenCookie(res, token) {
 }
 
 async function getRefreshToken(token) {
-  console.log(token);
   const refreshToken = await refreshTokenModel.findOne({ token }).populate('user');
-  console.log(refreshToken);
   if (!refreshToken || !refreshToken.isActive) throw 'Invalid token';
   return refreshToken;
 }
 
 function generateJwtToken(user) {
+  const exp = process.env.JWT_TOKEN_EXP_IN_MINUTES;
   return jwt.sign({ _id: user.id, role: user.role }, process.env.TOKEN_SECRET, {
-    expiresIn: '15m',
+    expiresIn: `${exp}`,
   });
 }
 
@@ -143,7 +142,7 @@ function generateRefreshToken(user, ipAddress) {
   return new refreshTokenModel({
     user: user.id,
     token: randomTokenString(),
-    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    expires: Date.now() + parseInt(process.env.REFRESH_TOKEN_EXP_SEVEN_DAYS),
     createdByIp: ipAddress,
   });
 }
