@@ -17,16 +17,20 @@ export default function authorize(roles = []) {
   }
 
   return [
+    // authenticate JWT token and attach user to request object (req.user)
     jwt({ secret, algorithms: ['HS256'] }),
 
+    // authorize based on user role
     async (req, res, next) => {
       const user = await userModel.findById(req.user._id);
       const refreshToken = await refreshTokenModel.find({ user: user.id });
 
       if (!user || (roles.length && !roles.includes(user.role))) {
+        // user no longer exists or role not authorized
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
+      // authentication and authorization successful
       req.user.role = user.role;
       req.user.ownsToken = (token) => !!refreshToken.find((x) => x.token === token);
       next();
