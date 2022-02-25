@@ -6,10 +6,16 @@ const activitySchema = new Schema(
     name: {
       type: 'string',
       required: true,
+      default: 'quiz',
+      trim: true,
+      lowercase: true,
     },
     type: {
       type: 'string',
       required: true,
+      default: 'kahoot',
+      lowercase: true,
+      trim: true,
     },
     sources: {
       type: 'array',

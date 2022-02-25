@@ -4,6 +4,7 @@ const { Schema, model } = mongoose;
 const kahootSchema = new Schema(
   {
     partOfCourse: {
+      type: Schema.Types.ObjectId,
       ref: 'Course',
       required: true,
     },
@@ -12,6 +13,7 @@ const kahootSchema = new Schema(
       required: true,
     },
     hostedBy: {
+      type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
     },
@@ -25,8 +27,7 @@ const kahootSchema = new Schema(
     },
     finalScore: {
       position: {
-        number: 'number',
-        required: true,
+        amount: 'number',
       },
       player: {
         type: 'array',
