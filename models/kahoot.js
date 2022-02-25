@@ -21,6 +21,7 @@ const kahootSchema = new Schema(
     },
     numberOfPlayers: {
       type: 'number',
+      required: true,
     },
     finalScore: {
       position: {
