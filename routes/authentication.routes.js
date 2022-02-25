@@ -6,7 +6,20 @@ const router = Router();
 import '../middleware/authorize.middleware.js';
 import { login, refreshToken } from '../controllers/auth.controllers.js';
 import validateRequest from '../middleware/validate.middleware.js';
+import { quizUpload } from '../controllers/superAdmin.controllers.js';
 // const authorize = require('../middleware/authorize.middleware');
+
+import multer from 'multer';
+const fileStorageEngine = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, './tmp');
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  },
+});
+
+const upload = multer({ storage: fileStorageEngine });
 
 router.get('/', (req, res) => {
   res.status(200).json({ error: 'Hello this is a test' });
@@ -17,6 +30,7 @@ router.get('/', (req, res) => {
  */
 router.post('/login', authenticateSchema, login);
 
+router.post('/upload', upload.single('file'), quizUpload);
 /**
  * POST: Revoke token
  * Authorize: Restrict access to the route to authenticated users with specified roles
