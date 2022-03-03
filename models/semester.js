@@ -17,7 +17,7 @@ const semesterSchema = new Schema(
       max: 6,
     },
     type: {
-      enum: ['fall', ['spring']],
+      enum: ['fall', 'spring'],
       required: true,
     },
     courseGroups: {
