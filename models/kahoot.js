@@ -6,57 +6,47 @@ const kahootSchema = new Schema(
     partOfCourse: {
       type: Schema.Types.ObjectId,
       ref: 'Course',
-      required: true,
     },
     playedOn: {
       type: Date,
       required: true,
     },
     hostedBy: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
-    numberOfQuestions: {
-      type: 'number',
+      type: 'string',
       required: true,
     },
     numberOfPlayers: {
-      type: 'number',
+      type: 'string',
       required: true,
     },
-    finalScore: {
-      position: {
-        amount: 'number',
+    finalScores: [
+      {
+        rank: {
+          type: 'number',
+        },
+        player: {
+          type: 'string',
+        },
+        totalScore: {
+          type: 'number',
+        },
+        correctAnswers: {
+          type: 'number',
+        },
+        incfiorrectAnswers: {
+          type: 'number',
+        },
       },
-      player: {
-        type: 'array',
-      },
-      totalScore: {
-        type: 'number',
-        required: true,
-      },
-      correctAnswers: {
-        type: 'number',
-        required: true,
-      },
-      inCorrectAnswers: {
-        type: 'number',
-        required: true,
-      },
-    },
+    ],
     quizPerformance: {
       totalCorrectAnswers: {
         type: 'number',
-        required: true,
       },
-      totalInCorrectAnswers: {
+      totalIncorrectAnswers: {
         type: 'number',
-        required: true,
       },
       averageScore: {
         type: 'number',
-        required: true,
       },
     },
   },
