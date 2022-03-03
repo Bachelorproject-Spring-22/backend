@@ -1,5 +1,5 @@
 import express from 'express';
-import { createUser, createCourse } from '../controllers/superAdmin.controllers.js';
+import { createUser, createCourse, createProgramme } from '../controllers/superAdmin.controllers.js';
 
 const router = express.Router();
 
@@ -13,6 +13,8 @@ const router = express.Router();
  */
 router.post('/users', createUser);
 
-router.post('course', createCourse);
+router.post('/course', createCourse);
+
+router.post('/programme', createProgramme);
 
 export default router;
