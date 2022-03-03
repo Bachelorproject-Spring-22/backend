@@ -17,10 +17,12 @@ const activitySchema = new Schema(
       lowercase: true,
       trim: true,
     },
-    sources: {
-      type: 'array',
-      ref: 'Kahoot',
-    },
+    sources: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Kahoot',
+      },
+    ],
   },
   { timestamps: true },
 );
