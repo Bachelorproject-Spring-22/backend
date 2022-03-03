@@ -15,10 +15,12 @@ const courseSchema = new Schema(
       type: 'string',
       required: true,
     },
-    activities: {
-      type: 'array',
-      ref: 'Activity',
-    },
+    activities: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Activity',
+      },
+    ],
     semester: {
       ref: 'Semester',
       required: true,
