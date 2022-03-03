@@ -25,11 +25,11 @@ export const readDataFromExcel = (file) => {
         name: 'Final Scores',
         header: { rows: 3 },
         columnToKey: {
-          A: 'Rank',
-          B: 'Player',
-          C: 'scorePoints',
+          A: 'rank',
+          B: 'player',
+          C: 'totalScore',
           D: 'correctAnswers',
-          E: 'inCorrectAnswers',
+          E: 'incorrectAnswers',
         },
       },
       {
