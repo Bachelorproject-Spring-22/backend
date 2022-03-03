@@ -22,7 +22,7 @@ const fileStorageEngine = multer.diskStorage({
 const upload = multer({ storage: fileStorageEngine });
 
 router.get('/', (req, res) => {
-  res.status(200).json({ error: 'Hello this is a test' });
+  return res.status(200).json({ msg: 'check' });
 });
 /**
  * POST: User Login
