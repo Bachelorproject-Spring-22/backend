@@ -1,6 +1,7 @@
 import userModel from '../models/user.js';
 import bcrypt from 'bcryptjs';
-
+import studyProgrammeModel from '../models/studyProgramme.js';
+import semesterModel from '../models/semester.js';
 //
 // @USER
 //
@@ -48,16 +49,53 @@ export const createCourse = async (req, res) => {
   }
 };
 
-export const createSemester = async (req, res) => {
-  const { year, periodNumber, name } = req.body;
-  if (!year || !name || !periodNumber) {
-    return res.status(400).json({ error: 'year, periodnumber and year is required' });
+const createSemester = (semesterNumbers) => {
+  const semesterArray = [];
+
+  let periodNumber;
+
+  for (let i = 0; i < semesterNumbers; i++) {
+    let semester = {
+      periodNumber: i + 1,
+    };
+    semesterArray.push(semester);
   }
+  return semesterArray;
 };
 
 export const createProgramme = async (req, res) => {
-  const { programmeCode, year, name, startTerm, studyPeriods } = req.body;
-  if (programmeCode || !year || !name || !startTerm || !studyPeriods) {
-    return res.status(400).json({ error: 'programmeCode, year, name, startTerm, studyPeriods is required' });
+  const { programmeCode, year, name, startTerm, semesters } = req.body;
+
+  if (!programmeCode || !year || !name || !startTerm || !semesters) {
+    return res.status(400).json({ error: 'programmeCode, year, name, startTerm is required' });
   }
+
+  const studyProgrammeCode = `${programmeCode}${year}`;
+
+  const studyProgrammeExists = await studyProgrammeModel.exists({ studyProgrammeCode });
+  if (studyProgrammeExists) return res.status(400).json({ error: 'Programme already exists' });
+
+  const semester = createSemester(semesters);
+  const semesterIds = await semesterModel.insertMany(semester);
+  const studyProgramme = new studyProgrammeModel({
+    programmeCode,
+    year,
+    name,
+    startTerm,
+    studyPeriods: semesterIds.map((docs) => docs._id),
+  });
+  try {
+    await studyProgramme.save();
+    res.status(201).json({ message: 'StudyProgramme created successfully', studyProgramme });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error when creating study programme', error });
+  }
+};
+
+const getSemesterData = async (req, res) => {
+  const { studyProgrammeCode } = req.body;
+  if (!studyProgramme) {
+    return res.status(400).json({ error: 'StudyProgramme code is required' });
+  }
+  const getStudyProgrammeCode = await studyProgrammeModel.findOne({ studyProgrammeCode });
 };
