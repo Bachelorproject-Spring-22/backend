@@ -8,8 +8,8 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import { connectToMongoDB } from './config/mongoose.js ';
 
-import authRoute from './routes/authentication.routes.js';
-import userRoute from './routes/user.routes.js';
+import authRoute from './routes/auth.routes.js';
+import userRoute from './routes/superAdmin.routes.js';
 
 import './config/passportAuth.js';
 
@@ -45,7 +45,7 @@ async function bootstrap() {
     console.log(`Server listening on PORT: ${process.env.PORT} | NODE_ENV: ${process.env.NODE_ENV.toUpperCase()}`),
   );
 
-  // app.use((error, _, res, __) => res.status(error.status || 500).json({ error: 'Something went wrong' }));
+  //app.use((error, _, res, __) => res.status(error.status || 500).json({ error: 'Something went wrong' }));
 
   connectToMongoDB();
 }

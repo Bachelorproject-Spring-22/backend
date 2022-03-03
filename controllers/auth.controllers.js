@@ -60,6 +60,7 @@ export const revokeToken = async (req, res) => {
       user: refreshToken.user.username,
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: 'There was an error revoking the token', error });
   }
 };
@@ -67,8 +68,6 @@ export const revokeToken = async (req, res) => {
 export const refreshToken = async (req, res) => {
   const token = req.cookies.refreshToken;
   const ipAddress = req.ip;
-
-  console.log(token);
   // Generates refresh token using user information and ip address
   // revokes old refresh token (if any)
   // saves new and old refresh token
