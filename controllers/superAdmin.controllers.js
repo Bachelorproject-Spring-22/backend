@@ -2,6 +2,8 @@ import userModel from '../models/user.js';
 import bcrypt from 'bcryptjs';
 import studyProgrammeModel from '../models/studyProgramme.js';
 import semesterModel from '../models/semester.js';
+import courseGroupModel from '../models/courseGroups.js';
+import courseModel from '../models/course.js';
 //
 // @USER
 //
@@ -42,25 +44,87 @@ export const createUser = async (req, res) => {
 };
 
 export const createCourse = async (req, res) => {
-  const { code, name, credits, studyPlanCodes } = req.body;
+  const { code, name, credits, year, semester, studyProgrammeCodes } = req.body;
 
-  if (!code || !name || !credits || !studyPlanCodes) {
-    return res.status(400).json({ error: 'code, name, credits, studyPlanCodes is required' });
+  if (!code || !name || !credits || !year || !semester) {
+    return res.status(400).json({ error: 'code, name, credits, year, semester is required' });
+  }
+  const courseId = `${code}-${year}-${semester}`;
+  const courseExists = await courseModel.exists({ courseId });
+  if (courseExists) return res.status(400).json({ error: 'Course already exists' });
+
+  const studyProgrammeData = await studyProgrammeModel.find({ studyProgrammeCodes });
+
+  const course = new courseModel({
+    code,
+    courseId,
+    name,
+    credits,
+  });
+  try {
+    //await course.save();
+    res.status(201).json({ message: 'Course created successfully', course });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error when getting study programme' });
   }
 };
 
-const createSemester = (semesterNumbers) => {
+export const updateCourseGroupWithCourse = async (req, res) => {};
+
+const createSemesterAndCourseGroup = (semesterNumbers, programmeCode, year, name) => {
   const semesterArray = [];
 
   let periodNumber;
-
   for (let i = 0; i < semesterNumbers; i++) {
-    let semester = {
-      periodNumber: i + 1,
-    };
-    semesterArray.push(semester);
+    let periodToYear;
+    for (let i = 0; i < semesterNumbers; i++) {
+      switch (i + 1) {
+        case 1:
+          periodToYear = 1;
+          break;
+        case 2:
+          periodToYear = 1;
+          break;
+        case 3:
+          periodToYear = 2;
+          break;
+        case 4:
+          periodToYear = 2;
+          break;
+        case 5:
+          periodToYear = 3;
+          break;
+        case 6:
+          periodToYear = 3;
+          break;
+        case 7:
+          periodToYear = 4;
+          break;
+        case 8:
+          periodToYear = 4;
+          break;
+        case 9:
+          periodToYear = 5;
+          break;
+        case 10:
+          periodToYear = 5;
+          break;
+        default:
+          throw new Error('Invalid period number');
+      }
+      const courseGroups = new courseGroupModel({
+        code: `${programmeCode}${periodToYear}-${year.toString().slice(-2)}`,
+        name: `${name}-${periodToYear}.year`,
+      });
+
+      let semester = new semesterModel({
+        periodNumber: i + 1,
+        courseGroups,
+      });
+      semesterArray.push(semester);
+    }
+    return semesterArray;
   }
-  return semesterArray;
 };
 
 export const createProgramme = async (req, res) => {
@@ -69,20 +133,17 @@ export const createProgramme = async (req, res) => {
   if (!programmeCode || !year || !name || !startTerm || !semesters) {
     return res.status(400).json({ error: 'programmeCode, year, name, startTerm is required' });
   }
-
   const studyProgrammeCode = `${programmeCode}${year}`;
-
   const studyProgrammeExists = await studyProgrammeModel.exists({ studyProgrammeCode });
   if (studyProgrammeExists) return res.status(400).json({ error: 'Programme already exists' });
 
-  const semester = createSemester(semesters);
-  const semesterIds = await semesterModel.insertMany(semester);
+  const data = createSemesterAndCourseGroup(semesters, programmeCode, year, name);
   const studyProgramme = new studyProgrammeModel({
     programmeCode,
     year,
     name,
     startTerm,
-    studyPeriods: semesterIds.map((docs) => docs._id),
+    studyPeriods: data,
   });
   try {
     await studyProgramme.save();
@@ -92,10 +153,35 @@ export const createProgramme = async (req, res) => {
   }
 };
 
-const getSemesterData = async (req, res) => {
+export const getSemesterData = async (req, res) => {
   const { studyProgrammeCode } = req.body;
-  if (!studyProgramme) {
+
+  if (!studyProgrammeCode) {
     return res.status(400).json({ error: 'StudyProgramme code is required' });
   }
-  const getStudyProgrammeCode = await studyProgrammeModel.findOne({ studyProgrammeCode });
+
+  try {
+    const getStudyProgrammeCode = await studyProgrammeModel.findOne({ studyProgrammeCode });
+    const getMoreData = await semesterModel.find({ _id: getStudyProgrammeCode.studyPeriods });
+    const getSemesterData = getMoreData.filter((data) => {
+      if (data.courseGroups.length > 0) {
+        return data.courseGroups;
+      }
+    });
+
+    const courseGroupsArray = [];
+    getSemesterData.forEach((data) => {
+      data.courseGroups.map((group) => courseGroupsArray.push(group));
+    });
+    const getCourseGroups = await courseGroupModel.find({ _id: courseGroupsArray });
+
+    res.status(201).json({
+      message: 'StudyProgramme resolved successfully',
+      studyProgramme: getStudyProgrammeCode,
+      getSemester: getMoreData,
+      getCourseGroups,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error when getting study programme' });
+  }
 };
