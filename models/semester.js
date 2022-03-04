@@ -8,11 +8,10 @@ const semesterSchema = new Schema(
       trim: true,
       required: true,
       min: 1,
-      max: 6,
+      max: 10,
     },
     courseGroups: {
-      type: 'array',
-      ref: 'Course',
+      type: 'object',
     },
   },
   { timestamps: true },

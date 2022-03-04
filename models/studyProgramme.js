@@ -12,6 +12,10 @@ const studyProgramme = new Schema(
         return _t.programmeCode + lastTwo;
       },
     },
+    name: {
+      type: String,
+      required: true,
+    },
     programmeCode: {
       type: 'string',
       required: true,
@@ -21,11 +25,11 @@ const studyProgramme = new Schema(
       required: true,
     },
     startTerm: {
+      type: 'string',
       enum: ['fall', 'spring'],
     },
     studyPeriods: {
       type: 'array',
-      ref: 'Semester',
     },
     users: {
       type: 'array',
@@ -34,10 +38,5 @@ const studyProgramme = new Schema(
   },
   { timestamps: true },
 );
-
-/*studyProgramme.pre('save', function (next) {
-  this.studyProgrammeCode = this.get('programmeCode') + this.get('year');
-  next();
-});*/
 
 export default model('studyProgramme', studyProgramme);

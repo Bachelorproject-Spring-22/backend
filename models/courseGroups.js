@@ -1,13 +1,9 @@
 import mongoose from 'mongoose';
 const { Schema, model } = mongoose;
 
-const courseSchema = new Schema(
+const courseGroupsSchema = new Schema(
   {
     code: {
-      type: 'string',
-      required: true,
-    },
-    courseId: {
       type: 'string',
       required: true,
     },
@@ -15,18 +11,14 @@ const courseSchema = new Schema(
       type: 'string',
       required: true,
     },
-    credits: {
-      type: 'number',
-      required: true,
-    },
-    activities: [
+    courses: [
       {
         type: Schema.Types.ObjectId,
-        ref: 'Activity',
+        ref: 'Course',
       },
     ],
   },
   { timestamps: true },
 );
 
-export default model('Course', courseSchema);
+export default model('CourseGroup', courseGroupsSchema);
