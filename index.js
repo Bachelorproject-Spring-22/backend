@@ -38,8 +38,8 @@ async function bootstrap() {
 
   const authUser = passport.authenticate('jwt', { session: false });
   app.use('/', authRoute);
-  // app.use('/superAdmin', userRoute);
-  app.use('/superAdmin', authUser, hasRole.SuperAdmin, userRoute);
+  app.use('/superAdmin', userRoute);
+  //app.use('/superAdmin', authUser, hasRole.SuperAdmin, userRoute);
 
   app.listen(process.env.PORT, () =>
     console.log(`Server listening on PORT: ${process.env.PORT} | NODE_ENV: ${process.env.NODE_ENV.toUpperCase()}`),
