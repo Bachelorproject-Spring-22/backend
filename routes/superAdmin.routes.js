@@ -1,5 +1,11 @@
 import express from 'express';
-import { createUser, createProgramme, getSemesterData, createCourse } from '../controllers/superAdmin.controllers.js';
+import {
+  createUser,
+  createProgramme,
+  getSemesterData,
+  createCourse,
+  updateCourseGroupWithCourse,
+} from '../controllers/superAdmin.controllers.js';
 
 const router = express.Router();
 
@@ -16,6 +22,8 @@ router.post('/users', createUser);
 router.post('/programme', createProgramme);
 
 router.post('/course', createCourse);
+
+router.post('/update', updateCourseGroupWithCourse);
 
 router.post('/test', getSemesterData);
 
