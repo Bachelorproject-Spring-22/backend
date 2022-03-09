@@ -84,10 +84,12 @@ const studyProgramme = new Schema(
         ],
       },
     ],
-    users: {
-      type: 'array',
-      ref: 'User',
-    },
+    users: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
   },
   { timestamps: true },
 );
