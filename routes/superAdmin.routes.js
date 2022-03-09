@@ -5,6 +5,7 @@ import {
   getSemesterData,
   createCourse,
   updateCourseGroupWithCourse,
+  updateProgrammeWithUsers,
 } from '../controllers/superAdmin.controllers.js';
 
 const router = express.Router();
@@ -18,6 +19,8 @@ const router = express.Router();
  * req.body = name, surname, role, password
  */
 router.post('/users', createUser);
+
+router.post('/user', updateProgrammeWithUsers);
 
 router.post('/programme', createProgramme);
 
