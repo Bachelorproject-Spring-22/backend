@@ -1,8 +1,8 @@
-import userModel from '../models/user.js';
 import bcrypt from 'bcryptjs';
-import studyProgrammeModel from '../models/studyProgramme.js';
-
 import courseModel from '../models/course.js';
+import studyProgrammeModel from '../models/studyProgramme.js';
+import userModel from '../models/user.js';
+
 //
 // @USER
 //
@@ -160,6 +160,64 @@ const createSemesterAndCourseGroup = (semesterNumbers, programmeCode, year, name
       semesterArray.push(semester);
     }
     return semesterArray;
+  }
+};
+
+export const updateProgrammeWithUsers = async (req, res) => {
+  // Pseudo code
+  // Check if req.body contains the required info | x
+  // Check if user exist | x
+  // Check if studyProgramme exists | x
+  // Check if user is already added to the studyPlan | x
+  // Update studyPlan with the new user | x
+
+  const username = ['monster', 'test', 'bobble', 'glenneha'];
+
+  const { studyProgrammeCode } = req.body;
+  if (!studyProgrammeCode) {
+    return res.status(400).json({ error: 'studyProgrammeCode and user is required' });
+  }
+
+  const checkUser = await userModel.find({ username }, { username: 1 }).sort({ _id: 1 }).lean();
+  if (checkUser.length === 0) return res.status(400).json({ error: 'User(s) does not exist' });
+
+  const checkStudyProgrammeCode = await studyProgrammeModel.findOne({ studyProgrammeCode }).lean();
+  if (!checkStudyProgrammeCode) return res.status(400).json({ error: 'Programme does not exist' });
+
+  let checkIfUserIsAddedToProgramme = [];
+  checkUser.forEach((user) => {
+    checkStudyProgrammeCode.users.forEach((name) => {
+      if (user._id.toString() === name.toString()) {
+        checkIfUserIsAddedToProgramme.push(user.username);
+      }
+    });
+  });
+
+  if (checkIfUserIsAddedToProgramme.length !== 0) {
+    return res.status(400).json({
+      error: `Remove following user(s) from input [${checkIfUserIsAddedToProgramme}]`,
+      users: checkIfUserIsAddedToProgramme,
+    });
+  }
+  let users = [];
+
+  // Used for existingUsers: https://stackoverflow.com/questions/1187518/how-to-get-the-difference-between-two-arrays-in-javascript
+  // Used for userThatDoesNotExist: https://stackoverflow.com/questions/55773869/how-to-get-the-difference-of-two-string-arrays
+  const existingUsers = username.filter((user) =>
+    checkUser.some((names) => {
+      return user === names.username && users.sort().push(names._id);
+    }),
+  );
+  const usersThatDoesNotExist = username.filter((user) => !existingUsers.includes(user));
+
+  try {
+    await studyProgrammeModel.updateOne({ studyProgrammeCode }, { $push: { users } });
+    res.status(201).json({
+      message: `Users added successfully [${existingUsers}]`,
+      warning: `Users that were not added [${usersThatDoesNotExist}]`,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error when creating study programme' });
   }
 };
 
