@@ -170,10 +170,7 @@ export const updateProgrammeWithUsers = async (req, res) => {
   // Check if studyProgramme exists | x
   // Check if user is already added to the studyPlan | x
   // Update studyPlan with the new user | x
-
-  const username = ['monster', 'test', 'bobble', 'glenneha'];
-
-  const { studyProgrammeCode } = req.body;
+  const { studyProgrammeCode, username } = req.body;
   if (!studyProgrammeCode) {
     return res.status(400).json({ error: 'studyProgrammeCode and user is required' });
   }
