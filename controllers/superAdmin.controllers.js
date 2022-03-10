@@ -42,21 +42,38 @@ export const createUser = async (req, res) => {
   }
 };
 
-export const createCourse = async (req, res) => {
-  const { code, name, credits, year, semester } = req.body;
+const createActivitiesForCourse = (activities) => {
+  const activitiesArray = [];
 
-  if (!code || !name || !credits || !year || !semester) {
-    return res.status(400).json({ error: 'code, name, credits, year, semester is required' });
+  for (let i = 0; i < activities.length; i++) {
+    const { variant, type } = activities[i];
+    const activitiy = {
+      type,
+      variant,
+    };
+    activitiesArray.push(activitiy);
+  }
+  return activitiesArray;
+};
+
+export const createCourse = async (req, res) => {
+  const { code, name, credits, year, semester, activities } = req.body;
+
+  if (!code || !name || !credits || !year || !semester || !activities) {
+    return res.status(400).json({ error: 'code, name, credits, year, semester and activities are required' });
   }
   const courseId = `${code}_${year}_${semester}`;
   const courseExists = await courseModel.exists({ courseId });
   if (courseExists) return res.status(400).json({ error: 'Course already exists' });
+
+  const activitiesArray = createActivitiesForCourse(activities);
 
   const course = new courseModel({
     code,
     courseId,
     name,
     credits,
+    activities: activitiesArray,
   });
 
   try {
