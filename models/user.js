@@ -29,12 +29,11 @@ const userSchema = new Schema(
     programmeCode: {
       type: 'string',
       trim: true,
-      lowercase: true,
+      uppercase: true,
     },
     year: {
-      type: 'string',
+      type: Number,
       trim: true,
-      lowercase: true,
     },
   },
   { timestamps: true },

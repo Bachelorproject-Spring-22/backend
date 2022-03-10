@@ -6,7 +6,7 @@ const router = Router();
 import '../middleware/authorize.middleware.js';
 import { login, refreshToken } from '../controllers/auth.controllers.js';
 import validateRequest from '../middleware/validate.middleware.js';
-import { quizUpload } from '../controllers/superAdmin.controllers.js';
+import { quizUpload } from '../controllers/employee.controllers.js';
 // const authorize = require('../middleware/authorize.middleware');
 
 import multer from 'multer';

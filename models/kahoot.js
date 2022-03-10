@@ -26,6 +26,8 @@ const kahootSchema = new Schema(
         },
         player: {
           type: 'string',
+          trim: true,
+          lowercase: true,
         },
         totalScore: {
           type: 'number',
@@ -33,7 +35,7 @@ const kahootSchema = new Schema(
         correctAnswers: {
           type: 'number',
         },
-        incfiorrectAnswers: {
+        incorrectAnswers: {
           type: 'number',
         },
       },
