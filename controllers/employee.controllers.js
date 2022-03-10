@@ -1,5 +1,6 @@
 import kahootModel from '../models/kahoot.js';
 import activityModel from '../models/activity.js';
+import courseModel from '../models/course.js';
 
 import { readDataFromExcel } from '../config/excelToJson.js';
 
@@ -20,12 +21,50 @@ export const quizUpload = async (req, res, next) => {
   });
 
   // TODO: Change this to course model and add a way to define if it is kahoot or something else.
-  /* const activityId = '621d00bdb3306339b3d630e5';
-  await activityModel.updateOne({ _id: activityId }, { $push: { sources: kahoot._id } }); */
-
+  const courseId = 'IDG1292_f2019';
+  await courseModel.updateOne(
+    { courseId },
+    { $push: { 'activities.$[activities].sources': kahoot._id } },
+    { arrayFilters: [{ 'activities.name': 'kahoot' }] },
+  );
   try {
     await kahoot.save();
+
     res.status(201).json({ message: 'Quiz uploaded successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error when creating quiz' });
+  }
+};
+
+export const aggregateQuizScoresInACourse = async (req, res) => {
+  const { courseId } = req.body;
+
+  if (!courseId) {
+    return res.status(400).json({ error: 'StudyProgramme code is required' });
+  }
+
+  const test = await courseModel.findOne({ courseId });
+  console.log(test);
+  const getAllKahootsFromActivity = await kahootModel.find({ _id: sources }, { _id: 1 });
+
+  const ids = getAllKahootsFromActivity.map((doc) => doc._id);
+  const totalScoreFromKahoots = await kahootModel.aggregate([
+    { $match: { _id: { $in: ids } } },
+    { $unwind: '$finalScores' },
+    {
+      $group: {
+        _id: '$finalScores.player',
+        totalScore: { $sum: '$finalScores.totalScore' },
+        totalCorrect: { $sum: '$finalScores.correctAnswers' },
+      },
+    },
+    { $sort: { totalScore: -1 } },
+  ]);
+
+  try {
+    res
+      .status(201)
+      .json({ message: `Course: ${courseId}`, totalQuizzes: ids.length, totalScore: totalScoreFromKahoots });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error when creating quiz', error });
   }
