@@ -46,10 +46,10 @@ const createActivitiesForCourse = (activities) => {
   const activitiesArray = [];
 
   for (let i = 0; i < activities.length; i++) {
-    const { variant, type } = activities[i];
+    const { variant, name } = activities[i];
     const activitiy = {
-      type,
       variant,
+      name,
     };
     activitiesArray.push(activitiy);
   }
