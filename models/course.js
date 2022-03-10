@@ -21,7 +21,7 @@ const courseSchema = new Schema(
     },
     activities: [
       {
-        type: {
+        name: {
           type: 'string',
           required: true,
           default: 'quiz',
