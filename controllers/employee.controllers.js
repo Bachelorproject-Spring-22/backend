@@ -19,8 +19,9 @@ export const quizUpload = async (req, res, next) => {
     finalScores,
   });
 
-  const activityId = '621d00bdb3306339b3d630e5';
-  await activityModel.updateOne({ _id: activityId }, { $push: { sources: kahoot._id } });
+  // TODO: Change this to course model and add a way to define if it is kahoot or something else.
+  /* const activityId = '621d00bdb3306339b3d630e5';
+  await activityModel.updateOne({ _id: activityId }, { $push: { sources: kahoot._id } }); */
 
   try {
     await kahoot.save();
