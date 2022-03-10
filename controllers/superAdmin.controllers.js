@@ -62,7 +62,7 @@ export const createCourse = async (req, res) => {
   if (!code || !name || !credits || !year || !semester || !activities) {
     return res.status(400).json({ error: 'code, name, credits, year, semester and activities are required' });
   }
-  const courseId = `${code}_${year}_${semester}`;
+  const courseId = `${code}_${semester[0]}${year}`;
   const courseExists = await courseModel.exists({ courseId });
   if (courseExists) return res.status(400).json({ error: 'Course already exists' });
 
