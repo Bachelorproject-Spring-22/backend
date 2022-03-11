@@ -12,45 +12,34 @@ const kahootSchema = new Schema(
       required: true,
     },
     hostedBy: {
-      type: 'string',
+      type: String,
       required: true,
     },
     numberOfPlayers: {
-      type: 'string',
+      type: String,
       required: true,
     },
     finalScores: [
       {
         rank: {
-          type: 'number',
+          type: Number,
         },
         player: {
-          type: 'string',
+          type: String,
           trim: true,
           lowercase: true,
         },
         totalScore: {
-          type: 'number',
+          type: Number,
         },
         correctAnswers: {
-          type: 'number',
+          type: Number,
         },
         incorrectAnswers: {
-          type: 'number',
+          type: Number,
         },
       },
     ],
-    quizPerformance: {
-      totalCorrectAnswers: {
-        type: 'number',
-      },
-      totalIncorrectAnswers: {
-        type: 'number',
-      },
-      averageScore: {
-        type: 'number',
-      },
-    },
   },
   { timestamps: true },
 );

@@ -17,15 +17,15 @@ const studyProgramme = new Schema(
       required: true,
     },
     programmeCode: {
-      type: 'string',
+      type: String,
       required: true,
     },
     year: {
-      type: 'number',
+      type: Number,
       required: true,
     },
     startTerm: {
-      type: 'string',
+      type: String,
       enum: ['fall', 'spring'],
     },
     studyPeriods: [
@@ -38,7 +38,7 @@ const studyProgramme = new Schema(
         },
         dates: {
           term: {
-            type: 'string',
+            type: String,
             enum: ['fall', 'spring'],
             default: function () {
               const _t = this;
@@ -52,14 +52,14 @@ const studyProgramme = new Schema(
             },
           },
           startDate: {
-            type: 'string',
+            type: String,
             default: function () {
               const _t = this;
               return _t.dates.term === 'fall' ? 'August' : 'Januar';
             },
           },
           endDate: {
-            type: 'string',
+            type: String,
             default: function () {
               const _t = this;
               return _t.dates.term === 'fall' ? 'December' : 'Juni';
@@ -67,13 +67,13 @@ const studyProgramme = new Schema(
           },
         },
         code: {
-          type: 'string',
+          type: String,
         },
         name: {
-          type: 'string',
+          type: String,
         },
         startTerm: {
-          type: 'string',
+          type: String,
           enum: ['fall', 'spring'],
         },
         courses: [
