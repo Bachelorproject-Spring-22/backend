@@ -1,5 +1,6 @@
 import kahootModel from '../models/kahoot.js';
 import courseModel from '../models/course.js';
+import studyProgrammeModel from '../models/studyProgramme.js';
 
 import { readDataFromExcel } from '../config/excelToJson.js';
 
@@ -37,19 +38,37 @@ export const quizUpload = async (req, res, next) => {
 };
 
 export const aggregateQuizScores = async (req, res) => {
-  const { courseId, variant, name } = req.body;
+  const { courseId, variant, name, periodNumber, studyProgrammeCode, semesterCode } = req.body;
 
   if (!courseId || !variant || !name) {
     return res.status(400).json({ error: 'CourseId and variant and name is required' });
   }
 
-  const findCourse = await courseModel.find({ courseId });
+  let findCourse;
+  if (periodNumber && studyProgrammeCode) {
+    const studyProgramme = await studyProgrammeModel.find({ studyProgrammeCode });
+    if (!studyProgramme) return res.status(404).json({ error: 'StudyProgramme does not exist' });
+    let coursesInPeriod = [];
+    const checkStudyPeriod = await studyProgrammeModel.aggregate([
+      { $match: { studyProgrammeCode } },
+      { $unwind: '$studyPeriods' },
+      { $match: { 'studyPeriods.periodNumber': periodNumber } },
+      { $unwind: '$studyPeriods.courses' },
+      { $project: { 'studyPeriods.code': 1, 'studyPeriods.courses': 1 } },
+    ]);
 
+    checkStudyPeriod.forEach((data) => {
+      coursesInPeriod.push(data.studyPeriods.courses);
+    });
+    findCourse = await courseModel.find({ _id: coursesInPeriod });
+  } else {
+    findCourse = await courseModel.find({ courseId });
+  }
   let sources = [];
   findCourse.forEach(({ activities }) => {
-    const [a] = activities;
-    if (a.name === name && a.variant === variant && a.sources.length !== 0)
-      a.sources.forEach((source) => sources.push(source));
+    const [activity] = activities;
+    if (activity.name === name && activity.variant === variant && activity.sources.length !== 0)
+      activity.sources.forEach((source) => sources.push(source));
   });
 
   const getAllKahootsFromActivity = await kahootModel.find({ _id: sources }, { _id: 1 });
@@ -71,9 +90,15 @@ export const aggregateQuizScores = async (req, res) => {
   ]);
 
   try {
-    res
-      .status(201)
-      .json({ message: `Course(s): ${courseId}`, totalQuizzes: ids.length, totalScore: totalScoreFromKahoots });
+    !periodNumber && !studyProgrammeCode
+      ? res
+          .status(201)
+          .json({ message: `Course(s): ${courseId}`, totalQuizzes: ids.length, totalScore: totalScoreFromKahoots })
+      : res.status(201).json({
+          message: `StudyPlan: ${studyProgrammeCode} periodNumber: ${periodNumber}`,
+          totalQuizzes: ids.length,
+          totalScore: totalScoreFromKahoots,
+        });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error when creating quiz' });
   }
