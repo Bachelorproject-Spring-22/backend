@@ -52,9 +52,8 @@ export const aggregateQuizScores = async (req, res) => {
       a.sources.forEach((source) => sources.push(source));
   });
 
-  const getAllKahootsFromActivity = await kahootModel.find({ _id: sources }, { _id: 1, playedOn: 1 });
+  const getAllKahootsFromActivity = await kahootModel.find({ _id: sources }, { _id: 1 });
 
-  console.log(getAllKahootsFromActivity.map((doc) => Date.parse(doc.playedOn)));
   const ids = getAllKahootsFromActivity.map((doc) => doc._id);
   const totalScoreFromKahoots = await kahootModel.aggregate([
     { $match: { _id: { $in: ids } } },
