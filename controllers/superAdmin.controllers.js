@@ -38,7 +38,7 @@ export const createUser = async (req, res) => {
     await user.save();
     res.status(201).json({ message: 'User created successfully', username, role, email, programmeCode, year });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error when creating user', error });
+    res.status(500).json({ error: 'Internal server error when creating user' });
   }
 };
 
@@ -259,7 +259,7 @@ export const createProgramme = async (req, res) => {
     await studyProgramme.save();
     res.status(201).json({ message: 'StudyProgramme created successfully', studyProgramme });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error when creating study programme', error });
+    res.status(500).json({ error: 'Internal server error when creating study programme' });
   }
 };
 
