@@ -12,10 +12,6 @@ import { aggregateQuizScoresInACourse } from '../controllers/employee.controller
 
 const router = express.Router();
 
-//
-// @USER
-//
-
 /**
  * POST
  * req.body = name, surname, role, password

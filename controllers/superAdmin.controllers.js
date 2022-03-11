@@ -22,7 +22,6 @@ const createActivitiesForCourse = (activities) => {
 const createStudyPeriod = (semesterNumbers, programmeCode, year, name, startTerm) => {
   const semesterArray = [];
 
-  let periodNumber;
   for (let i = 0; i < semesterNumbers; i++) {
     let periodToYear;
     for (let i = 0; i < semesterNumbers; i++) {
@@ -51,7 +50,7 @@ const createStudyPeriod = (semesterNumbers, programmeCode, year, name, startTerm
           throw new Error('Invalid period number');
       }
 
-      let semester = {
+      const semester = {
         periodNumber: i + 1,
         code: `${programmeCode}${periodToYear}-${year.toString().slice(-2)}`,
         name: `${name}-${periodToYear}.year`,
