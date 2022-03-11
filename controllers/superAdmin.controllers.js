@@ -3,44 +3,7 @@ import courseModel from '../models/course.js';
 import studyProgrammeModel from '../models/studyProgramme.js';
 import userModel from '../models/user.js';
 
-//
-// @USER
-//
-
-// Super Admins can invite users
-export const createUser = async (req, res) => {
-  const { username, role, email, password, programmeCode, year } = req.body;
-  //validate fields
-  if (!username || !role || !password) {
-    return res.status(400).json({ error: 'username, role, email or password is required' });
-  }
-
-  const userExists = await userModel.exists({ username });
-  if (userExists) return res.status(400).json({ error: 'User already exists' });
-
-  if (email) {
-    const emailExists = await userModel.exists({ email });
-    if (emailExists) return res.status(400).json({ error: 'User with email already exists' });
-  }
-
-  const passwordHash = bcrypt.hashSync(password, 10);
-
-  const user = new userModel({
-    username,
-    role,
-    email,
-    password: passwordHash,
-    programmeCode,
-    year,
-  });
-
-  try {
-    await user.save();
-    res.status(201).json({ message: 'User created successfully', username, role, email, programmeCode, year });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error when creating user' });
-  }
-};
+// Helper functions
 
 const createActivitiesForCourse = (activities) => {
   const activitiesArray = [];
@@ -56,85 +19,7 @@ const createActivitiesForCourse = (activities) => {
   return activitiesArray;
 };
 
-export const createCourse = async (req, res) => {
-  const { code, name, credits, year, semester, activities } = req.body;
-
-  if (!code || !name || !credits || !year || !semester || !activities) {
-    return res.status(400).json({ error: 'code, name, credits, year, semester and activities are required' });
-  }
-  const courseId = `${code}_${semester[0]}${year}`;
-  const courseExists = await courseModel.exists({ courseId });
-  if (courseExists) return res.status(400).json({ error: 'Course already exists' });
-
-  const activitiesArray = createActivitiesForCourse(activities);
-
-  const course = new courseModel({
-    code,
-    courseId,
-    name,
-    credits,
-    activities: activitiesArray,
-  });
-
-  try {
-    await course.save();
-    res.status(201).json({ message: 'Course created successfully', course });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error when getting study programme' });
-  }
-};
-
-export const updateCourseGroupWithCourse = async (req, res) => {
-  // Pseudo code
-  // Check if req.body contains the required info | x
-  // Check if course exist | x
-  // Check if studyProgramme exists | x
-  // Check if course is already added to the courseGroup | x
-  // Update courseGroup with the new course | x
-
-  const { studyProgrammeCode, periodNumber, courseId } = req.body;
-  if (!studyProgrammeCode || !periodNumber || !courseId)
-    return res.status(400).json({ error: 'StudyProgrammeCode and studyPeriod must be specified' });
-
-  const course = await courseModel.findOne({ courseId }).lean();
-  if (!course) return res.status(404).json({ error: 'Course does not exist' });
-
-  const studyProgramme = await studyProgrammeModel.findOne({ studyProgrammeCode }).lean();
-  if (!studyProgramme) return res.status(404).json({ error: 'StudyProgramme does not exist' });
-
-  const checkStudyPeriod = await studyProgrammeModel.aggregate([
-    { $match: { studyProgrammeCode } },
-    { $unwind: '$studyPeriods' },
-    { $match: { 'studyPeriods.periodNumber': periodNumber } },
-    { $unwind: '$studyPeriods.courses' },
-    { $project: { 'studyPeriods.code': 1, 'studyPeriods.courses': 1 } },
-  ]);
-
-  const _id = course._id;
-
-  // check if checkStudyPeriod returns an populated array (Course is already added)
-  if (checkStudyPeriod.length !== 0) {
-    let studyPeriodId = checkStudyPeriod[0].studyPeriods.courses.toString();
-    if (studyPeriodId === _id.toString())
-      return res.status(404).json({ error: `Course is already added to semester ${periodNumber}` });
-  }
-
-  await studyProgrammeModel.updateOne(
-    { studyProgrammeCode },
-    { $push: { 'studyPeriods.$[studyPeriods].courses': { _id } } },
-    { arrayFilters: [{ 'studyPeriods.periodNumber': periodNumber }] },
-  );
-
-  try {
-    res.status(201).json({
-      message: `Updated Study plan successfully added Course: ${course.name} ${course.code} (${courseId}) to SemesterPeriod: (${periodNumber})`,
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error when getting study programme' });
-  }
-};
-
-const createSemesterAndCourseGroup = (semesterNumbers, programmeCode, year, name, startTerm) => {
+const createStudyPeriod = (semesterNumbers, programmeCode, year, name, startTerm) => {
   const semesterArray = [];
 
   let periodNumber;
@@ -180,7 +65,113 @@ const createSemesterAndCourseGroup = (semesterNumbers, programmeCode, year, name
   }
 };
 
-export const updateProgrammeWithUsers = async (req, res) => {
+//
+// @USER
+//
+
+// Super Admins can invite users
+export const createUser = async (req, res) => {
+  const { username, role, email, password, programmeCode, year } = req.body;
+  //validate fields
+  if (!username || !role || !password) {
+    return res.status(400).json({ error: 'username, role, email or password is required' });
+  }
+
+  const userExists = await userModel.exists({ username });
+  if (userExists) return res.status(400).json({ error: 'User already exists' });
+
+  if (email) {
+    const emailExists = await userModel.exists({ email });
+    if (emailExists) return res.status(400).json({ error: 'User with email already exists' });
+  }
+
+  const passwordHash = bcrypt.hashSync(password, 10);
+
+  const user = new userModel({
+    username,
+    role,
+    email,
+    password: passwordHash,
+    programmeCode,
+    year,
+  });
+
+  try {
+    await user.save();
+    res.status(201).json({ message: 'User created successfully', username, role, email, programmeCode, year });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error when creating user' });
+  }
+};
+
+//
+// @COURSE
+//
+
+export const createCourse = async (req, res) => {
+  const { code, name, credits, year, semester, activities } = req.body;
+
+  if (!code || !name || !credits || !year || !semester || !activities) {
+    return res.status(400).json({ error: 'code, name, credits, year, semester and activities are required' });
+  }
+  const courseId = `${code}_${semester[0]}${year}`;
+  const courseExists = await courseModel.exists({ courseId });
+  if (courseExists) return res.status(400).json({ error: 'Course already exists' });
+
+  const activitiesArray = createActivitiesForCourse(activities);
+
+  const course = new courseModel({
+    code,
+    courseId,
+    name,
+    credits,
+    activities: activitiesArray,
+  });
+
+  try {
+    await course.save();
+    res.status(201).json({ message: 'Course created successfully', course });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error when getting study programme' });
+  }
+};
+
+//
+// @STUDYPROGRAMME
+//
+export const createStudyProgramme = async (req, res) => {
+  const { programmeCode, year, name, startTerm, semesters } = req.body;
+
+  if (!programmeCode || !year || !name || !startTerm || !semesters) {
+    return res.status(400).json({ error: 'programmeCode, year, name, startTerm is required' });
+  }
+  const studyProgrammeCode = `${programmeCode}${year}`;
+  const studyProgrammeExists = await studyProgrammeModel.exists({ studyProgrammeCode });
+  if (studyProgrammeExists) return res.status(400).json({ error: 'Programme already exists' });
+
+  const data = createStudyPeriod(semesters, programmeCode, year, name, startTerm);
+
+  const studyProgramme = new studyProgrammeModel({
+    programmeCode,
+    year,
+    name,
+    startTerm,
+    studyPeriods: data,
+  });
+
+  try {
+    await studyProgramme.save();
+    res.status(201).json({ message: 'StudyProgramme created successfully', studyProgramme });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error when creating study programme' });
+  }
+};
+
+//
+// @UPDATESTUDYPROGRAMMEWITHUSERS
+//
+
+export const updateStudyProgrammeWithUsers = async (req, res) => {
   // Pseudo code
   // Check if req.body contains the required info | x
   // Check if user exist | x
@@ -235,31 +226,57 @@ export const updateProgrammeWithUsers = async (req, res) => {
   }
 };
 
-export const createProgramme = async (req, res) => {
-  const { programmeCode, year, name, startTerm, semesters } = req.body;
+//
+// @UPDATECOURSEWIRHCOURSE
+//
 
-  if (!programmeCode || !year || !name || !startTerm || !semesters) {
-    return res.status(400).json({ error: 'programmeCode, year, name, startTerm is required' });
+export const updateStudyPeriodWithCourse = async (req, res) => {
+  // Pseudo code
+  // Check if req.body contains the required info | x
+  // Check if course exist | x
+  // Check if studyProgramme exists | x
+  // Check if course is already added to the courseGroup | x
+  // Update courseGroup with the new course | x
+
+  const { studyProgrammeCode, periodNumber, courseId } = req.body;
+  if (!studyProgrammeCode || !periodNumber || !courseId)
+    return res.status(400).json({ error: 'StudyProgrammeCode and studyPeriod must be specified' });
+
+  const course = await courseModel.findOne({ courseId }).lean();
+  if (!course) return res.status(404).json({ error: 'Course does not exist' });
+
+  const studyProgramme = await studyProgrammeModel.findOne({ studyProgrammeCode }).lean();
+  if (!studyProgramme) return res.status(404).json({ error: 'StudyProgramme does not exist' });
+
+  const checkStudyPeriod = await studyProgrammeModel.aggregate([
+    { $match: { studyProgrammeCode } },
+    { $unwind: '$studyPeriods' },
+    { $match: { 'studyPeriods.periodNumber': periodNumber } },
+    { $unwind: '$studyPeriods.courses' },
+    { $project: { 'studyPeriods.code': 1, 'studyPeriods.courses': 1 } },
+  ]);
+
+  const _id = course._id;
+
+  // check if checkStudyPeriod returns an populated array (Course is already added)
+  if (checkStudyPeriod.length !== 0) {
+    let studyPeriodId = checkStudyPeriod[0].studyPeriods.courses.toString();
+    if (studyPeriodId === _id.toString())
+      return res.status(404).json({ error: `Course is already added to semester ${periodNumber}` });
   }
-  const studyProgrammeCode = `${programmeCode}${year}`;
-  const studyProgrammeExists = await studyProgrammeModel.exists({ studyProgrammeCode });
-  if (studyProgrammeExists) return res.status(400).json({ error: 'Programme already exists' });
 
-  const data = createSemesterAndCourseGroup(semesters, programmeCode, year, name, startTerm);
-
-  const studyProgramme = new studyProgrammeModel({
-    programmeCode,
-    year,
-    name,
-    startTerm,
-    studyPeriods: data,
-  });
+  await studyProgrammeModel.updateOne(
+    { studyProgrammeCode },
+    { $push: { 'studyPeriods.$[studyPeriods].courses': { _id } } },
+    { arrayFilters: [{ 'studyPeriods.periodNumber': periodNumber }] },
+  );
 
   try {
-    await studyProgramme.save();
-    res.status(201).json({ message: 'StudyProgramme created successfully', studyProgramme });
+    res.status(201).json({
+      message: `Updated Study plan successfully added Course: ${course.name} ${course.code} (${courseId}) to SemesterPeriod: (${periodNumber})`,
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error when creating study programme' });
+    res.status(500).json({ error: 'Internal server error when getting study programme' });
   }
 };
 

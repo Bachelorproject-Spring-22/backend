@@ -1,11 +1,11 @@
 import express from 'express';
 import {
   createUser,
-  createProgramme,
+  createStudyProgramme,
   getSemesterData,
   createCourse,
-  updateCourseGroupWithCourse,
-  updateProgrammeWithUsers,
+  updateStudyPeriodWithCourse,
+  updateStudyProgrammeWithUsers,
 } from '../controllers/superAdmin.controllers.js';
 
 import { aggregateQuizScoresInACourse } from '../controllers/employee.controllers.js';
@@ -22,13 +22,13 @@ const router = express.Router();
  */
 router.post('/users', createUser);
 
-router.post('/user', updateProgrammeWithUsers);
+router.post('/user', updateStudyProgrammeWithUsers);
 
-router.post('/programme', createProgramme);
+router.post('/programme', createStudyProgramme);
 
 router.post('/course', createCourse);
 
-router.post('/update', updateCourseGroupWithCourse);
+router.post('/update', updateStudyPeriodWithCourse);
 
 router.post('/test', getSemesterData);
 
