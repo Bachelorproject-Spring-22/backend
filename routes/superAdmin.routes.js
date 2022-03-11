@@ -8,7 +8,7 @@ import {
   updateStudyProgrammeWithUsers,
 } from '../controllers/superAdmin.controllers.js';
 
-import { aggregateQuizScoresInACourse } from '../controllers/employee.controllers.js';
+import { aggregateQuizScores } from '../controllers/employee.controllers.js';
 
 const router = express.Router();
 
@@ -28,6 +28,6 @@ router.post('/update', updateStudyPeriodWithCourse);
 
 router.post('/test', getSemesterData);
 
-router.get('/course', aggregateQuizScoresInACourse);
+router.get('/course', aggregateQuizScores);
 
 export default router;

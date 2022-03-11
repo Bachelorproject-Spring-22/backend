@@ -19,8 +19,9 @@ export const quizUpload = async (req, res, next) => {
     finalScores,
   });
 
-  // TODO: Change this to course model and add a way to define if it is kahoot or something else.
-  const courseId = 'IDG1292_f2019';
+  // TODO: Change this to course model | x
+  // add a way to define if it is kahoot or something else. (maybe use params??)
+  const courseId = 'IDG3100_f2019';
   await courseModel.updateOne(
     { courseId },
     { $push: { 'activities.$[activities].sources': kahoot._id } },
@@ -35,20 +36,25 @@ export const quizUpload = async (req, res, next) => {
   }
 };
 
-export const aggregateQuizScoresInACourse = async (req, res) => {
+export const aggregateQuizScores = async (req, res) => {
   const { courseId, variant, name } = req.body;
 
-  if (!courseId) {
-    return res.status(400).json({ error: 'StudyProgramme code is required' });
+  if (!courseId || !variant || !name) {
+    return res.status(400).json({ error: 'CourseId and variant and name is required' });
   }
 
-  const findCourse = await courseModel.findOne({ courseId });
-  const [activities] = findCourse.activities.filter((activities) => {
-    if (activities.name === name && activities.variant === variant) return activities;
-  });
-  const { sources } = activities;
-  const getAllKahootsFromActivity = await kahootModel.find({ _id: sources }, { _id: 1 });
+  const findCourse = await courseModel.find({ courseId });
 
+  let sources = [];
+  findCourse.forEach(({ activities }) => {
+    const [a] = activities;
+    if (a.name === name && a.variant === variant && a.sources.length !== 0)
+      a.sources.forEach((source) => sources.push(source));
+  });
+
+  const getAllKahootsFromActivity = await kahootModel.find({ _id: sources }, { _id: 1, playedOn: 1 });
+
+  console.log(getAllKahootsFromActivity.map((doc) => Date.parse(doc.playedOn)));
   const ids = getAllKahootsFromActivity.map((doc) => doc._id);
   const totalScoreFromKahoots = await kahootModel.aggregate([
     { $match: { _id: { $in: ids } } },
@@ -58,6 +64,8 @@ export const aggregateQuizScoresInACourse = async (req, res) => {
         _id: '$finalScores.player',
         totalScore: { $sum: '$finalScores.totalScore' },
         totalCorrect: { $sum: '$finalScores.correctAnswers' },
+        totalIncorrectAnswers: { $sum: '$finalScores.incorrectAnswers' },
+        quizzesAttended: { $count: {} },
       },
     },
     { $sort: { totalScore: -1 } },
@@ -66,7 +74,7 @@ export const aggregateQuizScoresInACourse = async (req, res) => {
   try {
     res
       .status(201)
-      .json({ message: `Course: ${courseId}`, totalQuizzes: ids.length, totalScore: totalScoreFromKahoots });
+      .json({ message: `Course(s): ${courseId}`, totalQuizzes: ids.length, totalScore: totalScoreFromKahoots });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error when creating quiz' });
   }
