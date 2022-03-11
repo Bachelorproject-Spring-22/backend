@@ -1,5 +1,4 @@
 import kahootModel from '../models/kahoot.js';
-import activityModel from '../models/activity.js';
 import courseModel from '../models/course.js';
 
 import { readDataFromExcel } from '../config/excelToJson.js';
