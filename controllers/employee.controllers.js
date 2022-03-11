@@ -36,14 +36,17 @@ export const quizUpload = async (req, res, next) => {
 };
 
 export const aggregateQuizScoresInACourse = async (req, res) => {
-  const { courseId } = req.body;
+  const { courseId, variant, name } = req.body;
 
   if (!courseId) {
     return res.status(400).json({ error: 'StudyProgramme code is required' });
   }
 
-  const test = await courseModel.findOne({ courseId });
-  console.log(test);
+  const findCourse = await courseModel.findOne({ courseId });
+  const [activities] = findCourse.activities.filter((activities) => {
+    if (activities.name === name && activities.variant === variant) return activities;
+  });
+  const { sources } = activities;
   const getAllKahootsFromActivity = await kahootModel.find({ _id: sources }, { _id: 1 });
 
   const ids = getAllKahootsFromActivity.map((doc) => doc._id);
@@ -65,6 +68,6 @@ export const aggregateQuizScoresInACourse = async (req, res) => {
       .status(201)
       .json({ message: `Course: ${courseId}`, totalQuizzes: ids.length, totalScore: totalScoreFromKahoots });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error when creating quiz', error });
+    res.status(500).json({ error: 'Internal server error when creating quiz' });
   }
 };
