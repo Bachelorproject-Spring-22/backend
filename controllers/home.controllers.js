@@ -20,57 +20,55 @@ export const userSpecificCourseAndRank = async (req, res) => {
   const studyProgramme = await studyProgrammeModel.find({ studyProgrammeCode });
   if (!studyProgramme) return res.status(404).json({ error: 'StudyProgramme does not exist' });
 
-  let findCourse;
-  let coursesInPeriod = [];
   const checkStudyPeriod = await studyProgrammeModel.aggregate([
     { $match: { studyProgrammeCode } },
     { $unwind: '$studyPeriods' },
-    { $match: { 'studyPeriods.periodNumber': periodNumber } },
     { $unwind: '$studyPeriods.courses' },
-    { $project: { 'studyPeriods.code': 1, 'studyPeriods.courses': 1 } },
-  ]);
-  checkStudyPeriod.forEach((data) => {
-    coursesInPeriod.push(data.studyPeriods.courses);
-  });
-  findCourse = await courseModel.find({ _id: coursesInPeriod });
-
-  let sources = [];
-  findCourse.forEach(({ activities }) => {
-    const [activity] = activities;
-    if (activity.name === name && activity.variant === variant && activity.sources.length !== 0)
-      activity.sources.forEach((source) => sources.push(source));
-  });
-
-  const getAllKahootsFromActivity = await kahootModel.find({ _id: sources }, { _id: 1 });
-
-  const ids = getAllKahootsFromActivity.map((doc) => doc._id);
-  const getCourseAndQuizResults = await kahootModel.aggregate([
-    { $match: { _id: { $in: ids } } },
-    { $unwind: '$finalScores' },
-    { $match: { 'finalScores.player': username } },
     {
-      $group: {
-        _id: {
-          player: '$finalScores.player',
-          rank: '$finalScores.rank',
-          courseId: '$course.courseId',
-          code: '$course.code',
-          name: '$course.name',
-        },
-        totalScore: { $sum: '$finalScores.totalScore' },
-        quizzesAttended: { $count: {} },
+      $lookup: {
+        from: 'courses',
+        localField: 'studyPeriods.courses',
+        foreignField: '_id',
+        as: 'coursesInPeriod',
       },
     },
-    { $sort: { _id: 1 } },
+    { $unwind: '$coursesInPeriod' },
+    {
+      $project: { coursesInPeriod: 1, studyPeriods: 1 },
+    },
+    { $unwind: '$coursesInPeriod.activities' },
+    {
+      $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
+    },
+    {
+      $lookup: {
+        from: 'kahoots',
+        localField: 'coursesInPeriod.activities.sources',
+        foreignField: '_id',
+        as: 'kahootsInPeriod',
+      },
+    },
+    { $unwind: '$kahootsInPeriod' },
+    { $unwind: '$kahootsInPeriod.finalScores' },
+    { $match: { 'kahootsInPeriod.finalScores.player': username } },
+    {
+      $project: {
+        'studyPeriods.periodNumber': 1,
+        'studyPeriods.code': 1,
+        'studyPeriods.dates': 1,
+        'coursesInPeriod.code': 1,
+        'coursesInPeriod.name': 1,
+        'coursesInPeriod.courseId': 1,
+        'kahootsInPeriod.finalScores.rank': 1,
+        'kahootsInPeriod.finalScores.player': 1,
+      },
+    },
   ]);
-  const courses =
-    getCourseAndQuizResults.length === 0 ? 'You have not completed any quizzes this semester' : getCourseAndQuizResults;
+
   try {
     res.status(201).json({
-      message: `StudyPlan: ${studyProgrammeCode} periodNumber: ${periodNumber}`,
-      data: {
-        courses,
-      },
+      message: `StudyPlan: ${studyProgrammeCode}`,
+      checkStudyPeriod,
     });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error when creating study programme' });
