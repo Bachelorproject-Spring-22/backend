@@ -120,9 +120,10 @@ export const aggregateQuizScores = async (req, res) => {
           error: 'No quizzes found',
         })
       : !periodNumber && !studyProgrammeCode
-      ? res
-          .status(201)
-          .json({ message: `Course(s): ${courseId}`, totalQuizzes: ids.length, totalScore: totalScoreFromKahoots })
+      ? res.status(201).json({
+          message: `Course(s): ${courseId}`,
+          data: { totalQuizzes: ids.length, totalScore: totalScoreFromKahoots },
+        })
       : yearCode && studyProgrammeCode
       ? res.status(201).json({
           message: `StudyPlan: ${studyProgrammeCode} yearCode: ${yearCode}`,
