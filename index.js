@@ -10,6 +10,7 @@ import { connectToMongoDB } from './config/mongoose.js ';
 
 import authRoute from './routes/auth.routes.js';
 import userRoute from './routes/superAdmin.routes.js';
+import leaderboardRoute from './routes/leaderboard.routes.js';
 
 import './config/passportAuth.js';
 
@@ -38,8 +39,9 @@ async function bootstrap() {
 
   const authUser = passport.authenticate('jwt', { session: false });
   app.use('/', authRoute);
-  app.use('/superAdmin', userRoute);
-  //app.use('/superAdmin', authUser, hasRole.SuperAdmin, userRoute);
+  app.use('/leaderboard', authUser, leaderboardRoute);
+  //app.use('/superAdmin', userRoute);
+  app.use('/superAdmin', authUser, hasRole.SuperAdmin, userRoute);
 
   app.listen(process.env.PORT, () =>
     console.log(`Server listening on PORT: ${process.env.PORT} | NODE_ENV: ${process.env.NODE_ENV.toUpperCase()}`),
