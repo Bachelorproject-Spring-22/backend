@@ -24,6 +24,7 @@ export const userSpecificCourseAndRank = async (req, res) => {
     { $match: { studyProgrammeCode } },
     { $unwind: '$studyPeriods' },
     { $unwind: '$studyPeriods.courses' },
+    { $match: { 'studyPeriods.periodNumber': periodNumber } },
     {
       $lookup: {
         from: 'courses',
