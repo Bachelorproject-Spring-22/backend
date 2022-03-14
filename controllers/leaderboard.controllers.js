@@ -108,3 +108,52 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
     res.status(500).json({ error: 'Internal server error when creating study programme' });
   }
 };
+
+export const courseSpecificLeaderboard = async (req, res) => {
+  const { courseId } = req.params;
+  const name = 'kahoot';
+  const variant = 'quiz';
+  if (!variant || !name) {
+    return res.status(400).json({ error: 'Variant and name is required' });
+  }
+
+  const findCourse = await courseModel.find({ courseId });
+
+  let sources = [];
+  findCourse.forEach(({ activities }) => {
+    const [activity] = activities;
+    if (activity.name === name && activity.variant === variant && activity.sources.length !== 0)
+      activity.sources.forEach((source) => sources.push(source));
+  });
+
+  const getAllKahootsFromActivity = await kahootModel.find({ _id: sources }, { _id: 1 });
+
+  const ids = getAllKahootsFromActivity.map((doc) => doc._id);
+  const totalScoreFromKahoots = await kahootModel.aggregate([
+    { $match: { _id: { $in: ids } } },
+    { $unwind: '$finalScores' },
+    {
+      $group: {
+        _id: '$finalScores.player',
+        totalScore: { $sum: '$finalScores.totalScore' },
+        quizzesAttended: { $count: {} },
+      },
+    },
+    { $sort: { totalScore: -1 } },
+  ]);
+
+  try {
+    totalScoreFromKahoots.length === 0
+      ? res.status(201).json({
+          message: `Course(s): ${courseId}`,
+          data: null,
+          error: 'No quizzes found',
+        })
+      : res.status(201).json({
+          message: `Course(s): ${courseId}`,
+          data: { totalQuizzes: ids.length, totalScore: totalScoreFromKahoots },
+        });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error when creating study programme' });
+  }
+};
