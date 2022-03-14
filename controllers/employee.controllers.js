@@ -22,7 +22,7 @@ export const quizUpload = async (req, res, next) => {
 
   // TODO: Change this to course model | x
   // add a way to define if it is kahoot or something else. (maybe use params??)
-  const courseId = 'IDG3100_f2019';
+  const courseId = 'IDG1100_f2019';
   await courseModel.updateOne(
     { courseId },
     { $push: { 'activities.$[activities].sources': kahoot._id } },
@@ -37,30 +37,49 @@ export const quizUpload = async (req, res, next) => {
   }
 };
 
+// Input
+// Required input: variant and name
+// Aggregated leaderboard for course: required input + [courseId]
+// Aggregated leaderboard for semester: required input + [studyProgrammeCode], periodNumber
+// Aggregated leaderboard for year: required input + [studyProgrammeCode], [yearCode]
+
 export const aggregateQuizScores = async (req, res) => {
-  const { courseId, variant, name, periodNumber, studyProgrammeCode } = req.body;
+  const { courseId, variant, name, periodNumber, studyProgrammeCode, yearCode } = req.body;
 
   if (!variant || !name) {
     return res.status(400).json({ error: 'Variant and name is required' });
   }
 
-  if (!periodNumber && !studyProgrammeCode && !courseId) {
-    return res.status(400).json({ error: 'Provide either a period number and study program code or courseId' });
+  if (!periodNumber && !studyProgrammeCode && !courseId && !yearCode) {
+    return res.status(400).json({
+      error: 'Provide either a period number and study program code or courseId or study program code and yearCode',
+    });
   }
 
   let findCourse;
+  let coursesInPeriod = [];
   if (periodNumber && studyProgrammeCode) {
     const studyProgramme = await studyProgrammeModel.find({ studyProgrammeCode });
     if (!studyProgramme) return res.status(404).json({ error: 'StudyProgramme does not exist' });
-    let coursesInPeriod = [];
     const checkStudyPeriod = await studyProgrammeModel.aggregate([
-      { $match: { studyProgrammeCode } },
+      { $match: { studyProgrammeCode: { $in: studyProgrammeCode } } },
       { $unwind: '$studyPeriods' },
       { $match: { 'studyPeriods.periodNumber': periodNumber } },
       { $unwind: '$studyPeriods.courses' },
       { $project: { 'studyPeriods.code': 1, 'studyPeriods.courses': 1 } },
     ]);
-
+    checkStudyPeriod.forEach((data) => {
+      coursesInPeriod.push(data.studyPeriods.courses);
+    });
+    findCourse = await courseModel.find({ _id: coursesInPeriod });
+  } else if (studyProgrammeCode && yearCode) {
+    const checkStudyPeriod = await studyProgrammeModel.aggregate([
+      { $match: { studyProgrammeCode: { $in: studyProgrammeCode } } },
+      { $unwind: '$studyPeriods' },
+      { $match: { $or: [{ 'studyPeriods.periodNumber': periodNumber }, { 'studyPeriods.code': { $in: yearCode } }] } },
+      { $unwind: '$studyPeriods.courses' },
+      { $project: { 'studyPeriods.code': 1, 'studyPeriods.courses': 1 } },
+    ]);
     checkStudyPeriod.forEach((data) => {
       coursesInPeriod.push(data.studyPeriods.courses);
     });
@@ -94,14 +113,30 @@ export const aggregateQuizScores = async (req, res) => {
   ]);
 
   try {
-    !periodNumber && !studyProgrammeCode
+    totalScoreFromKahoots.length === 0
+      ? res.status(201).json({
+          message: `StudyPlan: ${studyProgrammeCode} periodNumber: ${periodNumber}`,
+          data: null,
+          error: 'No quizzes found',
+        })
+      : !periodNumber && !studyProgrammeCode
       ? res
           .status(201)
           .json({ message: `Course(s): ${courseId}`, totalQuizzes: ids.length, totalScore: totalScoreFromKahoots })
+      : yearCode && studyProgrammeCode
+      ? res.status(201).json({
+          message: `StudyPlan: ${studyProgrammeCode} yearCode: ${yearCode}`,
+          data: {
+            totalQuizzes: ids.length,
+            totalScore: totalScoreFromKahoots,
+          },
+        })
       : res.status(201).json({
           message: `StudyPlan: ${studyProgrammeCode} periodNumber: ${periodNumber}`,
-          totalQuizzes: ids.length,
-          totalScore: totalScoreFromKahoots,
+          data: {
+            totalQuizzes: ids.length,
+            totalScore: totalScoreFromKahoots,
+          },
         });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error when creating quiz' });
