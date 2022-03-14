@@ -259,9 +259,11 @@ export const updateStudyPeriodWithCourse = async (req, res) => {
 
   // check if checkStudyPeriod returns an populated array (Course is already added)
   if (checkStudyPeriod.length !== 0) {
-    let studyPeriodId = checkStudyPeriod[0].studyPeriods.courses.toString();
-    if (studyPeriodId === _id.toString())
-      return res.status(404).json({ error: `Course is already added to semester ${periodNumber}` });
+    const courseIsAlreadyAdded = checkStudyPeriod.filter(
+      (studyPeriod) => studyPeriod.studyPeriods.courses.toString() === _id.toString(),
+    );
+    if (courseIsAlreadyAdded.length !== 0)
+      return res.status(404).json({ error: `${courseId} is already added to semester ${periodNumber}` });
   }
 
   await studyProgrammeModel.updateOne(
