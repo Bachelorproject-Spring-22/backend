@@ -24,7 +24,6 @@ export const userSpecificCourseAndRank = async (req, res) => {
     { $match: { studyProgrammeCode } },
     { $unwind: '$studyPeriods' },
     { $unwind: '$studyPeriods.courses' },
-    { $match: { 'studyPeriods.periodNumber': periodNumber } },
     {
       $lookup: {
         from: 'courses',
@@ -53,15 +52,17 @@ export const userSpecificCourseAndRank = async (req, res) => {
     { $unwind: '$kahootsInPeriod.finalScores' },
     { $match: { 'kahootsInPeriod.finalScores.player': username } },
     {
-      $project: {
-        'studyPeriods.periodNumber': 1,
-        'studyPeriods.code': 1,
-        'studyPeriods.dates': 1,
-        'coursesInPeriod.code': 1,
-        'coursesInPeriod.name': 1,
-        'coursesInPeriod.courseId': 1,
-        'kahootsInPeriod.finalScores.rank': 1,
-        'kahootsInPeriod.finalScores.player': 1,
+      $group: {
+        _id: {
+          courseId: '$coursesInPeriod.courseId',
+          periodNumber: '$studyPeriods.periodNumber',
+          studyCode: '$studyPeriods.code',
+          dates: '$studyPeriods.dates',
+          periodCode: '$coursesInPeriod.code',
+          periodName: '$coursesInPeriod.name',
+          rank: '$kahootsInPeriod.finalScores.rank',
+          player: '$kahootsInPeriod.finalScores.player',
+        },
       },
     },
   ]);
