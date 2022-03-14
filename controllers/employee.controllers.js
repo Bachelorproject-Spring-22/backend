@@ -38,10 +38,14 @@ export const quizUpload = async (req, res, next) => {
 };
 
 export const aggregateQuizScores = async (req, res) => {
-  const { courseId, variant, name, periodNumber, studyProgrammeCode, semesterCode } = req.body;
+  const { courseId, variant, name, periodNumber, studyProgrammeCode } = req.body;
 
-  if (!courseId || !variant || !name) {
-    return res.status(400).json({ error: 'CourseId and variant and name is required' });
+  if (!variant || !name) {
+    return res.status(400).json({ error: 'Variant and name is required' });
+  }
+
+  if (!periodNumber && !studyProgrammeCode && !courseId) {
+    return res.status(400).json({ error: 'Provide either a period number and study program code or courseId' });
   }
 
   let findCourse;
