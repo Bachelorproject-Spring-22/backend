@@ -151,7 +151,13 @@ function generateJwtToken(user) {
   const exp = process.env.JWT_TOKEN_EXP_IN_MINUTES;
   const studyPeriod = calculateSemester(user.year);
   return jwt.sign(
-    { _id: user.id, role: user.role, username: user.username, studyProgrammeCode: user.programmeCode, studyPeriod },
+    {
+      _id: user.id,
+      role: user.role,
+      username: user.username,
+      studyProgrammeCode: user.programmeCode,
+      periodNumber: studyPeriod,
+    },
     process.env.TOKEN_SECRET,
     {
       expiresIn: `${exp}`,
