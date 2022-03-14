@@ -21,4 +21,8 @@ POST /api/refresh - refresh token
 POST /api/revoke - revoke token
 
 POST /superAdmin/users - creating a new user
+
+GET /leaderboard - get semester leaderboard and logged in user quizzes and rank
+get /leaderboard/:courseId - get a specific course leaderboard
+
 ```
