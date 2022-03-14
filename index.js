@@ -11,6 +11,7 @@ import { connectToMongoDB } from './config/mongoose.js ';
 import authRoute from './routes/auth.routes.js';
 import userRoute from './routes/superAdmin.routes.js';
 import leaderboardRoute from './routes/leaderboard.routes.js';
+import homeRoute from './routes/home.routes.js';
 
 import './config/passportAuth.js';
 
@@ -38,7 +39,9 @@ async function bootstrap() {
   app.use(morgan('dev'));
 
   const authUser = passport.authenticate('jwt', { session: false });
+
   app.use('/', authRoute);
+  app.use('/home', authUser, homeRoute);
   app.use('/leaderboard', authUser, leaderboardRoute);
   //app.use('/superAdmin', userRoute);
   app.use('/superAdmin', authUser, hasRole.SuperAdmin, userRoute);
