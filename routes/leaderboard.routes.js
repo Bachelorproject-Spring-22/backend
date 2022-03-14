@@ -1,9 +1,9 @@
 import express from 'express';
 
-import { semesterLeaderBoard } from '../controllers/leaderboard.controllers.js';
+import { semesterLeaderboardAndUserCourses } from '../controllers/leaderboard.controllers.js';
 
 const router = express.Router();
 
-router.get('/', semesterLeaderBoard);
+router.get('/', semesterLeaderboardAndUserCourses);
 
 export default router;
