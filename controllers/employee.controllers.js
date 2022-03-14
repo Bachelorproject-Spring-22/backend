@@ -6,6 +6,7 @@ import { readDataFromExcel } from '../config/excelToJson.js';
 
 export const quizUpload = async (req, res, next) => {
   const filePath = req.file;
+  const { courseId } = req.body;
   if (!filePath) return res.status(400).json({ error: 'Please upload a file' });
   const dataFromExcel = readDataFromExcel(req.file.path);
   if (!dataFromExcel) {
@@ -13,16 +14,23 @@ export const quizUpload = async (req, res, next) => {
   }
   const finalScores = dataFromExcel['Final Scores'].map((user) => user);
 
+  const { code, name } = await courseModel.findOne({ courseId });
+
   const kahoot = new kahootModel({
     playedOn: dataFromExcel['Overview'][0].B,
     hostedBy: dataFromExcel['Overview'][1].B,
     numberOfPlayers: dataFromExcel['Overview'][2].B,
+    course: {
+      code,
+      name,
+      courseId,
+    },
     finalScores,
   });
 
   // TODO: Change this to course model | x
   // add a way to define if it is kahoot or something else. (maybe use params??)
-  const courseId = 'IDG1100_f2019';
+
   await courseModel.updateOne(
     { courseId },
     { $push: { 'activities.$[activities].sources': kahoot._id } },
@@ -102,7 +110,7 @@ export const aggregateQuizScores = async (req, res) => {
     { $unwind: '$finalScores' },
     {
       $group: {
-        _id: '$finalScores.player',
+        _id: { player: '$finalScores.player' },
         totalScore: { $sum: '$finalScores.totalScore' },
         totalCorrect: { $sum: '$finalScores.correctAnswers' },
         totalIncorrectAnswers: { $sum: '$finalScores.incorrectAnswers' },
