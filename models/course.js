@@ -4,32 +4,32 @@ const { Schema, model } = mongoose;
 const courseSchema = new Schema(
   {
     code: {
-      type: 'string',
+      type: String,
       required: true,
     },
     courseId: {
-      type: 'string',
+      type: String,
       required: true,
     },
     name: {
-      type: 'string',
+      type: String,
       required: true,
     },
     credits: {
-      type: 'number',
+      type: Number,
       required: true,
     },
     activities: [
       {
         name: {
-          type: 'string',
+          type: String,
           required: true,
           default: 'quiz',
           trim: true,
           lowercase: true,
         },
         variant: {
-          type: 'string',
+          type: String,
           required: true,
           default: 'kahoot',
           lowercase: true,

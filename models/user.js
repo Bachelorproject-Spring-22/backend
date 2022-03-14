@@ -4,30 +4,30 @@ const { Schema, model } = mongoose;
 const userSchema = new Schema(
   {
     username: {
-      type: 'string',
+      type: String,
       unique: true,
       required: true,
       trim: true,
       lowercase: true,
     },
     email: {
-      type: 'string',
+      type: String,
       unique: true,
       trim: true,
       lowercase: true,
     },
     password: {
-      type: 'string',
+      type: String,
       required: true,
     },
     role: {
-      type: 'string',
+      type: String,
       required: true,
       enum: ['student', 'teacher', 'superAdmin'],
       default: 'student',
     },
     programmeCode: {
-      type: 'string',
+      type: String,
       trim: true,
       uppercase: true,
     },

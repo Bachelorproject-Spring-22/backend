@@ -14,9 +14,11 @@ Source: https://medium.com/codechef-vit/a-better-project-structure-with-express-
 
 # Routes
 
+```
 GET / - test route atm
 POST /login - user login
 POST /api/refresh - refresh token
 POST /api/revoke - revoke token
 
 POST /superAdmin/users - creating a new user
+```

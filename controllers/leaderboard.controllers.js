@@ -2,60 +2,16 @@ import kahootModel from '../models/kahoot.js';
 import courseModel from '../models/course.js';
 import studyProgrammeModel from '../models/studyProgramme.js';
 
-import { readDataFromExcel } from '../config/excelToJson.js';
-
-export const quizUpload = async (req, res, next) => {
-  const filePath = req.file;
-  if (!filePath) return res.status(400).json({ error: 'Please upload a file' });
-  const dataFromExcel = readDataFromExcel(req.file.path);
-  if (!dataFromExcel) {
-    return res.status(500).json({ error: 'Server error' }); // TODO: Change this error
-  }
-  const finalScores = dataFromExcel['Final Scores'].map((user) => user);
-
-  const kahoot = new kahootModel({
-    playedOn: dataFromExcel['Overview'][0].B,
-    hostedBy: dataFromExcel['Overview'][1].B,
-    numberOfPlayers: dataFromExcel['Overview'][2].B,
-    finalScores,
-  });
-
-  // TODO: Change this to course model | x
-  // add a way to define if it is kahoot or something else. (maybe use params??)
-  const courseId = 'IDG1100_f2019';
-  await courseModel.updateOne(
-    { courseId },
-    { $push: { 'activities.$[activities].sources': kahoot._id } },
-    { arrayFilters: [{ 'activities.name': 'kahoot' }] },
-  );
-  try {
-    await kahoot.save();
-
-    res.status(201).json({ message: 'Quiz uploaded successfully' });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error when creating quiz' });
-  }
-};
-
-// Input
-// Required input: variant and name
-// Aggregated leaderboard for course: required input + [courseId]
-// Aggregated leaderboard for semester: required input + [studyProgrammeCode], periodNumber
-// Aggregated leaderboard for year: required input + [studyProgrammeCode], [yearCode]
-
-export const aggregateQuizScores = async (req, res) => {
-  const { courseId, variant, name, periodNumber, studyProgrammeCode, yearCode } = req.body;
-
+const aggregatedQuizScores = async (courseId, variant, name, periodNumber, studyProgrammeCode, yearCode) => {
   if (!variant || !name) {
-    return res.status(400).json({ error: 'Variant and name is required' });
+    return { error: 'Variant and name is required' };
   }
 
   if (!periodNumber && !studyProgrammeCode && !courseId && !yearCode) {
-    return res.status(400).json({
+    return {
       error: 'Provide either a period number and study program code or courseId or study program code and yearCode',
-    });
+    };
   }
-
   let findCourse;
   let coursesInPeriod = [];
   if (periodNumber && studyProgrammeCode) {
@@ -112,34 +68,40 @@ export const aggregateQuizScores = async (req, res) => {
     { $sort: { totalScore: -1 } },
   ]);
 
+  return totalScoreFromKahoots.length === 0
+    ? {
+        message: `StudyPlan: ${studyProgrammeCode} periodNumber: ${periodNumber}`,
+        data: null,
+        error: 'No quizzes found',
+      }
+    : !periodNumber && !studyProgrammeCode
+    ? {
+        message: `Course(s): ${courseId}`,
+        data: { totalQuizzes: ids.length, totalScore: totalScoreFromKahoots },
+      }
+    : yearCode && studyProgrammeCode
+    ? {
+        message: `StudyPlan: ${studyProgrammeCode} yearCode: ${yearCode}`,
+        data: {
+          totalQuizzes: ids.length,
+          totalScore: totalScoreFromKahoots,
+        },
+      }
+    : {
+        message: `StudyPlan: ${studyProgrammeCode} periodNumber: ${periodNumber}`,
+        data: {
+          totalQuizzes: ids.length,
+          totalScore: totalScoreFromKahoots,
+        },
+      };
+};
+
+export const userLeaderboard = async (req, res) => {
+  const user = req.user;
+
   try {
-    totalScoreFromKahoots.length === 0
-      ? res.status(201).json({
-          message: `StudyPlan: ${studyProgrammeCode} periodNumber: ${periodNumber}`,
-          data: null,
-          error: 'No quizzes found',
-        })
-      : !periodNumber && !studyProgrammeCode
-      ? res.status(201).json({
-          message: `Course(s): ${courseId}`,
-          data: { totalQuizzes: ids.length, totalScore: totalScoreFromKahoots },
-        })
-      : yearCode && studyProgrammeCode
-      ? res.status(201).json({
-          message: `StudyPlan: ${studyProgrammeCode} yearCode: ${yearCode}`,
-          data: {
-            totalQuizzes: ids.length,
-            totalScore: totalScoreFromKahoots,
-          },
-        })
-      : res.status(201).json({
-          message: `StudyPlan: ${studyProgrammeCode} periodNumber: ${periodNumber}`,
-          data: {
-            totalQuizzes: ids.length,
-            totalScore: totalScoreFromKahoots,
-          },
-        });
+    res.status(201).json({ message: 'StudyProgramme created successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error when creating quiz' });
+    res.status(500).json({ error: 'Internal server error when creating study programme' });
   }
 };
