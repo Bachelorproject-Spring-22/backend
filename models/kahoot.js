@@ -7,6 +7,11 @@ const kahootSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'Course',
     },
+    course: {
+      courseId: String,
+      code: String,
+      name: String,
+    },
     playedOn: {
       type: Date,
       required: true,
