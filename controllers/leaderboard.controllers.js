@@ -81,6 +81,7 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
           quizzesAttended: { $count: {} },
         },
       },
+      { $sort: { _id: 1 } },
     ]);
 
     const courses =
