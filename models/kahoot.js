@@ -12,6 +12,21 @@ const kahootSchema = new Schema(
       code: String,
       name: String,
     },
+    quizId: {
+      type: String,
+      unique: true,
+      default: function () {
+        const _t = this;
+        const date = new Date(_t.playedOn);
+        const day = date.getDate();
+        const month = date.getMonth();
+        return `${_t.title}-${day}-${month}`;
+      },
+    },
+    title: {
+      type: String,
+      required: true,
+    },
     playedOn: {
       type: Date,
       required: true,
