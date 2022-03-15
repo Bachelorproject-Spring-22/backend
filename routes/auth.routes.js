@@ -4,10 +4,10 @@ import Joi from 'joi';
 const router = Router();
 
 import '../middleware/authorize.middleware.js';
-import { login, refreshToken } from '../controllers/auth.controllers.js';
+import { login, refreshToken, revokeToken } from '../controllers/auth.controllers.js';
 import validateRequest from '../middleware/validate.middleware.js';
 import { quizUpload } from '../controllers/employee.controllers.js';
-// const authorize = require('../middleware/authorize.middleware');
+import authorize from '../middleware/authorize.middleware.js';
 
 import multer from 'multer';
 const fileStorageEngine = multer.diskStorage({
@@ -35,7 +35,7 @@ router.post('/upload', upload.single('file'), quizUpload);
  * POST: Revoke token
  * Authorize: Restrict access to the route to authenticated users with specified roles
  */
-// router.post('/revoke', authorize(), auth.revokeToken);
+router.post('/api/revoke', authorize(), revokeToken);
 
 /**
  * POST: Refresh Token
