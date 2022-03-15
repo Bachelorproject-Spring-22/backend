@@ -23,7 +23,7 @@ export const userSpecificCourseAndRank = async (req, res) => {
   const studyProgrammeData = await studyProgrammeModel.aggregate([
     { $match: { studyProgrammeCode } },
     { $unwind: '$studyPeriods' },
-    { $match: { 'studyPeriods.periodNumber': 6 } },
+    { $match: { 'studyPeriods.periodNumber': periodNumber } },
     { $unwind: '$studyPeriods.courses' },
     {
       $lookup: {
@@ -88,12 +88,3 @@ export const userSpecificCourseAndRank = async (req, res) => {
     res.status(500).json({ error: 'Internal server error when creating study programme' });
   }
 };
-
-/*     {
-      $group: {
-        _id: '$kahootsInPeriod.finalScores.player',
-        totalScore: { $sum: '$kahootsInPeriod.finalScores.totalScore' },
-      },
-    }, */
-
-/*  { $project: { ranking: 1, _id: 0, name: 1 } }, */
