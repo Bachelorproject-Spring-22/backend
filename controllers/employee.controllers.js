@@ -6,39 +6,59 @@ import { readDataFromExcel } from '../config/excelToJson.js';
 
 export const quizUpload = async (req, res, next) => {
   const filePath = req.file;
-  const { courseId } = req.body;
+  const courseId = req.body.text;
+
   if (!filePath) return res.status(400).json({ error: 'Please upload a file' });
   const dataFromExcel = readDataFromExcel(req.file.path);
   if (!dataFromExcel) {
-    return res.status(500).json({ error: 'Server error' }); // TODO: Change this error
+    return res.status(400).json({ error: 'Server error' }); // TODO: Change this error
   }
   const finalScores = dataFromExcel['Final Scores'].map((user) => user);
-
-  const { code, name } = await courseModel.findOne({ courseId });
-
+  const activityIds = [];
+  const course = await courseModel.findOne({ courseId });
+  course.activities.forEach((kahoot) => {
+    if (kahoot.name === 'kahoot' && kahoot.variant === 'quiz') {
+      const [kahoots] = kahoot.sources;
+      activityIds.push(kahoots);
+    }
+  });
   const kahoot = new kahootModel({
-    playedOn: dataFromExcel['Overview'][0].B,
-    hostedBy: dataFromExcel['Overview'][1].B,
-    numberOfPlayers: dataFromExcel['Overview'][2].B,
+    title: dataFromExcel['Overview'][0].A,
+    playedOn: dataFromExcel['Overview'][1].B,
+    hostedBy: dataFromExcel['Overview'][2].B,
+    numberOfPlayers: dataFromExcel['Overview'][3].B,
     course: {
-      code,
-      name,
+      code: course.code,
+      name: course.name,
       courseId,
     },
     finalScores,
   });
 
-  // TODO: Change this to course model | x
-  // add a way to define if it is kahoot or something else. (maybe use params??)
+  const date = new Date(kahoot.playedOn);
+  const day = date.getDate();
+  const month = date.getMonth();
+  const getActivities = await kahootModel.find({ activityIds });
 
-  await courseModel.updateOne(
-    { courseId },
-    { $push: { 'activities.$[activities].sources': kahoot._id } },
-    { arrayFilters: [{ 'activities.name': 'kahoot' }] },
-  );
+  const createQuizId = `${kahoot.title}-${day}-${month}`;
+  const array = [];
+  getActivities.forEach((activity) => {
+    if (activity.quizId === createQuizId) {
+      array.push(activity.quizId);
+    }
+  });
+
+  if (array.length !== 0) {
+    return res.status(400).json({ error: 'Quiz is already uploaded to this course' });
+  }
+
   try {
     await kahoot.save();
-
+    await courseModel.updateOne(
+      { courseId },
+      { $push: { 'activities.$[activities].sources': kahoot._id } },
+      { arrayFilters: [{ 'activities.name': 'kahoot' }] },
+    );
     res.status(201).json({ message: 'Quiz uploaded successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error when creating quiz' });
