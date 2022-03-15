@@ -90,8 +90,7 @@ export const userSpecificCourseAndRank = async (req, res) => {
 };
 
 export const getUserSpecificCourseResultsLeaderBoard = async (req, res) => {
-  // const { username } = req.user;
-  const username = 'ironman';
+  const { username } = req.user;
   const { courseId } = req.params;
   const headers = req.headers.authorization;
   if (!headers)
