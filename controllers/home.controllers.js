@@ -49,7 +49,7 @@ export const userSpecificCourseAndRank = async (req, res) => {
         },
       },
       { $unwind: '$kahootsInPeriod' },
-      { $unwind: { path: '$kahootsInPeriod.finalScores' } },
+      { $unwind: '$kahootsInPeriod.finalScores' },
       {
         $group: {
           _id: {
@@ -89,9 +89,10 @@ export const userSpecificCourseAndRank = async (req, res) => {
   }
 };
 
-export const getUserSpecificCourseResults = async (req, res) => {
+export const getUserSpecificCourseResultsLeaderBoard = async (req, res) => {
+  // const { username } = req.user;
+  const username = 'ironman';
   const { courseId } = req.params;
-  const { username } = req.user;
   const headers = req.headers.authorization;
   if (!headers)
     return res.status(401).send({
@@ -116,7 +117,7 @@ export const getUserSpecificCourseResults = async (req, res) => {
       },
     },
     { $unwind: '$coursesInPeriod' },
-
+    { $match: { 'coursesInPeriod.courseId': courseId } },
     { $unwind: '$coursesInPeriod.activities' },
     {
       $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
@@ -130,12 +131,86 @@ export const getUserSpecificCourseResults = async (req, res) => {
       },
     },
     { $unwind: '$kahootsInPeriod' },
-    { $unwind: { path: '$kahootsInPeriod.finalScores' } },
+    { $unwind: '$kahootsInPeriod.finalScores' },
+    {
+      $group: {
+        _id: {
+          player: '$kahootsInPeriod.finalScores.player',
+          code: '$coursesInPeriod.code',
+          name: '$coursesInPeriod.name',
+          courseId: '$coursesInPeriod.courseId',
+        },
+        totalScore: { $sum: '$kahootsInPeriod.finalScores.totalScore' },
+        attendedQuizzes: { $count: {} },
+      },
+    },
+    { $sort: { totalScore: -1 } },
+    { $limit: 3 },
+    {
+      $group: {
+        _id: false,
+        course: {
+          $push: {
+            user: '$_id.player',
+            code: '$_id.code',
+            name: '$_id.name',
+            courseId: '$_id.courseId',
+            totalScore: '$totalScore',
+            attendedQuizzes: '$attended',
+          },
+        },
+      },
+    },
+    { $unwind: { path: '$course', includeArrayIndex: 'ranking' } },
+    { $project: { rank: { $add: ['$ranking', 1] }, course: 1, totalScore: 1, _id: 0 } },
+  ]);
+
+  const getUserSpecific = await studyProgrammeModel.aggregate([
+    { $match: { studyProgrammeCode } },
+    { $unwind: '$studyPeriods' },
+    { $match: { 'studyPeriods.periodNumber': periodNumber } },
+    { $unwind: '$studyPeriods.courses' },
+    {
+      $lookup: {
+        from: 'courses',
+        localField: 'studyPeriods.courses',
+        foreignField: '_id',
+        as: 'coursesInPeriod',
+      },
+    },
+    { $unwind: '$coursesInPeriod' },
+    { $match: { 'coursesInPeriod.courseId': courseId } },
+    { $unwind: '$coursesInPeriod.activities' },
+    {
+      $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
+    },
+    {
+      $lookup: {
+        from: 'kahoots',
+        localField: 'coursesInPeriod.activities.sources',
+        foreignField: '_id',
+        as: 'kahootsInPeriod',
+      },
+    },
+    { $unwind: '$kahootsInPeriod' },
+    { $unwind: '$kahootsInPeriod.finalScores' },
+    { $match: { 'kahootsInPeriod.finalScores.player': username } },
+    {
+      $project: {
+        'kahootsInPeriod.finalScores.totalScore': 1,
+        'kahootsInPeriod.finalScores.correctAnswers': 1,
+        'kahootsInPeriod.finalScores.incorrectAnswers': 1,
+        'kahootsInPeriod.quizId': 1,
+        'kahootsInPeriod.title': 1,
+        _id: 0,
+      },
+    },
   ]);
   try {
     res.status(201).json({
       message: `StudyPlan: ${studyProgrammeCode}, courseId: ${courseId}`,
       studyProgrammeData,
+      getUserSpecific,
     });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error when creating study programme' });
