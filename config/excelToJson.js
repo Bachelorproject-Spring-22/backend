@@ -34,11 +34,10 @@ export const readDataFromExcel = (file) => {
       },
       {
         name: 'Overview',
-        header: { rows: 1 },
-        range: 'A2:B5',
+        header: { rows: -1 },
+        range: 'A1:B5',
       },
     ],
   });
-
   return allQuizSheets;
 };
