@@ -75,7 +75,7 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
       },
     },
     { $unwind: { path: '$course', includeArrayIndex: 'ranking' } },
-    { $project: { rank: { $add: ['$ranking', 1] }, course: 1, totalScore: 1, _id: 0 } },
+    { $project: { rank: { $add: ['$ranking', 1] }, course: 1, totalScore: 1, quizzesAttended: 1, _id: 0 } },
   ]);
 
   const getUserSpecific = await studyProgrammeModel.aggregate([
