@@ -30,7 +30,6 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
       },
     },
     { $unwind: '$coursesInPeriod' },
-    { $match: { 'coursesInPeriod.courseId': courseId } },
     { $unwind: '$coursesInPeriod.activities' },
     {
       $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
@@ -69,7 +68,7 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
             name: '$_id.name',
             courseId: '$_id.courseId',
             totalScore: '$totalScore',
-            quizzesAttended: '$attended',
+            quizzesAttended: '$quizzesAttended',
           },
         },
       },
