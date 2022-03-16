@@ -150,12 +150,12 @@ export const getUserSpecificCourseResultsLeaderBoard = async (req, res) => {
         _id: false,
         course: {
           $push: {
-            user: '$_id.player',
+            _id: '$_id.player',
             code: '$_id.code',
             name: '$_id.name',
             courseId: '$_id.courseId',
             totalScore: '$totalScore',
-            attendedQuizzes: '$attended',
+            quizzesAttended: '$attended',
           },
         },
       },
