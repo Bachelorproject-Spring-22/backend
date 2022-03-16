@@ -217,3 +217,70 @@ export const getUserSpecificCourseResultsLeaderBoard = async (req, res) => {
     res.status(500).json({ error: 'Internal server error when creating study programme' });
   }
 };
+
+export const getUserSpecificCourseResultsLeaderBoardQuiz = async (req, res) => {
+  const { username } = req.user;
+  const { courseId, quizId } = req.params;
+  const headers = req.headers.authorization;
+  if (!headers)
+    return res.status(401).send({
+      error: 'Unauthorized',
+    });
+  const token = headers.split(' ')[1];
+  const { periodNumber, studyProgrammeCode } = jwtDecode(token);
+  const name = 'kahoot';
+  const variant = 'quiz';
+
+  const getUserSpecific = await studyProgrammeModel.aggregate([
+    { $match: { studyProgrammeCode } },
+    { $unwind: '$studyPeriods' },
+    { $match: { 'studyPeriods.periodNumber': periodNumber } },
+    { $unwind: '$studyPeriods.courses' },
+    {
+      $lookup: {
+        from: 'courses',
+        localField: 'studyPeriods.courses',
+        foreignField: '_id',
+        as: 'coursesInPeriod',
+      },
+    },
+    { $unwind: '$coursesInPeriod' },
+    { $match: { 'coursesInPeriod.courseId': courseId } },
+    { $unwind: '$coursesInPeriod.activities' },
+    {
+      $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
+    },
+    {
+      $lookup: {
+        from: 'kahoots',
+        localField: 'coursesInPeriod.activities.sources',
+        foreignField: '_id',
+        as: 'kahootsInPeriod',
+      },
+    },
+    { $unwind: { path: '$kahootsInPeriod', includeArrayIndex: 'quizNumber' } },
+    { $unwind: '$kahootsInPeriod.finalScores' },
+    { $match: { $and: [{ 'kahootsInPeriod.finalScores.player': username }, { 'kahootsInPeriod.quizId': quizId }] } },
+    {
+      $project: {
+        'kahootsInPeriod.finalScores.totalScore': 1,
+        'kahootsInPeriod.finalScores.correctAnswers': 1,
+        'kahootsInPeriod.finalScores.incorrectAnswers': 1,
+        'kahootsInPeriod.quizId': 1,
+        'kahootsInPeriod.title': 1,
+        'coursesInPeriod.code': 1,
+        'coursesInPeriod.name': 1,
+        quizNumber: { $add: ['$quizNumber', 1] },
+        _id: 0,
+      },
+    },
+  ]);
+  try {
+    res.status(201).json({
+      message: `StudyPlan: ${studyProgrammeCode}, courseId: ${courseId}`,
+      getUserSpecific,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error when creating study programme' });
+  }
+};
