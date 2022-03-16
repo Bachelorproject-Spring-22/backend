@@ -8,8 +8,6 @@ import {
   updateStudyProgrammeWithUsers,
 } from '../controllers/superAdmin.controllers.js';
 
-import { aggregateQuizScores } from '../controllers/employee.controllers.js';
-
 const router = express.Router();
 
 /**
@@ -27,7 +25,5 @@ router.post('/course', createCourse);
 router.post('/update', updateStudyPeriodWithCourse);
 
 router.post('/test', getSemesterData);
-
-router.get('/course', aggregateQuizScores);
 
 export default router;

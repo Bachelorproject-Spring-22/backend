@@ -3,6 +3,7 @@ import courseModel from '../models/course.js';
 import studyProgrammeModel from '../models/studyProgramme.js';
 import userModel from '../models/user.js';
 
+import { createUnauthorized, createBadRequest } from '../utils/errors.js';
 // Helper functions
 
 const createActivitiesForCourse = (activities) => {
@@ -73,15 +74,15 @@ export const createUser = async (req, res) => {
   const { username, role, email, password, programmeCode, year } = req.body;
   //validate fields
   if (!username || !role || !password) {
-    return res.status(400).json({ error: 'username, role, email or password is required' });
+    return createBadRequest('Username, role, email or password is required');
   }
 
   const userExists = await userModel.exists({ username });
-  if (userExists) return res.status(400).json({ error: 'User already exists' });
+  if (userExists) return createBadRequest('User already exists');
 
   if (email) {
     const emailExists = await userModel.exists({ email });
-    if (emailExists) return res.status(400).json({ error: 'User with email already exists' });
+    if (emailExists) return createBadRequest('Email already exists');
   }
 
   const passwordHash = bcrypt.hashSync(password, 10);
@@ -95,12 +96,8 @@ export const createUser = async (req, res) => {
     year,
   });
 
-  try {
-    await user.save();
-    res.status(201).json({ message: 'User created successfully', username, role, email, programmeCode, year });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error when creating user' });
-  }
+  await user.save();
+  res.status(201).json({ message: 'User created successfully', username, role, email, programmeCode, year });
 };
 
 //
@@ -110,12 +107,12 @@ export const createUser = async (req, res) => {
 export const createCourse = async (req, res) => {
   const { code, name, credits, year, semester, activities } = req.body;
 
-  if (!code || !name || !credits || !year || !semester || !activities) {
-    return res.status(400).json({ error: 'code, name, credits, year, semester and activities are required' });
-  }
+  if (!code || !name || !credits || !year || !semester || !activities)
+    return createBadRequest('Code, name, credits, year, semester and activities are required');
+
   const courseId = `${code}_${semester[0]}${year}`;
   const courseExists = await courseModel.exists({ courseId });
-  if (courseExists) return res.status(400).json({ error: 'Course already exists' });
+  if (courseExists) return createBadRequest('Course already exists');
 
   const activitiesArray = createActivitiesForCourse(activities);
 
@@ -127,12 +124,8 @@ export const createCourse = async (req, res) => {
     activities: activitiesArray,
   });
 
-  try {
-    await course.save();
-    res.status(201).json({ message: 'Course created successfully', course });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error when getting study programme' });
-  }
+  await course.save();
+  res.status(201).json({ message: 'Course created successfully', course });
 };
 
 //
@@ -141,12 +134,12 @@ export const createCourse = async (req, res) => {
 export const createStudyProgramme = async (req, res) => {
   const { programmeCode, year, name, startTerm, semesters } = req.body;
 
-  if (!programmeCode || !year || !name || !startTerm || !semesters) {
-    return res.status(400).json({ error: 'programmeCode, year, name, startTerm is required' });
-  }
+  if (!programmeCode || !year || !name || !startTerm || !semesters)
+    return createBadRequest('programmeCode, year, name, startTerm is required');
+
   const studyProgrammeCode = `${programmeCode}${year}`;
   const studyProgrammeExists = await studyProgrammeModel.exists({ studyProgrammeCode });
-  if (studyProgrammeExists) return res.status(400).json({ error: 'Programme already exists' });
+  if (studyProgrammeExists) return createBadRequest('Programme already exists');
 
   const data = createStudyPeriod(semesters, programmeCode, year, name, startTerm);
 
@@ -158,12 +151,8 @@ export const createStudyProgramme = async (req, res) => {
     studyPeriods: data,
   });
 
-  try {
-    await studyProgramme.save();
-    res.status(201).json({ message: 'StudyProgramme created successfully', studyProgramme });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error when creating study programme' });
-  }
+  await studyProgramme.save();
+  res.status(201).json({ message: 'StudyProgramme created successfully', studyProgramme });
 };
 
 //
@@ -171,22 +160,14 @@ export const createStudyProgramme = async (req, res) => {
 //
 
 export const updateStudyProgrammeWithUsers = async (req, res) => {
-  // Pseudo code
-  // Check if req.body contains the required info | x
-  // Check if user exist | x
-  // Check if studyProgramme exists | x
-  // Check if user is already added to the studyPlan | x
-  // Update studyPlan with the new user | x
   const { studyProgrammeCode, username } = req.body;
-  if (!studyProgrammeCode) {
-    return res.status(400).json({ error: 'studyProgrammeCode and user is required' });
-  }
+  if (!studyProgrammeCode) return createBadRequest('studyProgrammeCode and user is required');
 
   const checkUser = await userModel.find({ username }, { username: 1 }).sort({ _id: 1 }).lean();
-  if (checkUser.length === 0) return res.status(400).json({ error: 'User(s) does not exist' });
+  if (checkUser.length === 0) return createBadRequest('User(s) does not exist');
 
   const checkStudyProgrammeCode = await studyProgrammeModel.findOne({ studyProgrammeCode }).lean();
-  if (!checkStudyProgrammeCode) return res.status(400).json({ error: 'Programme does not exist' });
+  if (!checkStudyProgrammeCode) return createBadRequest('Programme does not exist');
 
   let checkIfUserIsAddedToProgramme = [];
   checkUser.forEach((user) => {

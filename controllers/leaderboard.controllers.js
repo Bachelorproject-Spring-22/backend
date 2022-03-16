@@ -1,15 +1,13 @@
-import kahootModel from '../models/kahoot.js';
-import courseModel from '../models/course.js';
 import studyProgrammeModel from '../models/studyProgramme.js';
 import jwtDecode from 'jwt-decode';
+
+import { createUnauthorized } from '../utils/errors.js';
 
 export const semesterLeaderboardAndUserCourses = async (req, res) => {
   const { username } = req.user;
   const headers = req.headers.authorization;
-  if (!headers)
-    return res.status(401).send({
-      error: 'Unauthorized',
-    });
+  if (!headers) return createUnauthorized();
+
   const token = headers.split(' ')[1];
   const { periodNumber, studyProgrammeCode } = jwtDecode(token);
   const name = 'kahoot';
@@ -138,24 +136,18 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
     { $project: { rank: { $add: ['$ranking', 1] }, course: 1, totalScore: 1, quizzesAttended: 1, _id: 0 } },
   ]);
 
-  try {
-    res.status(201).json({
-      message: `StudyPlan: ${studyProgrammeCode}`,
-      studyProgrammeData,
-      getUserSpecific,
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error when creating study programme' });
-  }
+  res.status(201).json({
+    message: `StudyPlan: ${studyProgrammeCode}`,
+    studyProgrammeData,
+    getUserSpecific,
+  });
 };
 
 export const courseSpecificLeaderboard = async (req, res) => {
   const headers = req.headers.authorization;
   const { courseId } = req.params;
-  if (!headers)
-    return res.status(401).send({
-      error: 'Unauthorized',
-    });
+  if (!headers) return createUnauthorized();
+
   const token = headers.split(' ')[1];
   const { periodNumber, studyProgrammeCode } = jwtDecode(token);
   const name = 'kahoot';
@@ -222,12 +214,8 @@ export const courseSpecificLeaderboard = async (req, res) => {
     { $project: { rank: { $add: ['$ranking', 1] }, course: 1, totalScore: 1, quizzesAttended: 1, _id: 0 } },
   ]);
 
-  try {
-    res.status(201).json({
-      message: `StudyPlan: ${studyProgrammeCode}`,
-      studyProgrammeData,
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error when creating study programme' });
-  }
+  res.status(201).json({
+    message: `StudyPlan: ${studyProgrammeCode}`,
+    studyProgrammeData,
+  });
 };

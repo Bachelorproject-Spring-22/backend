@@ -8,6 +8,7 @@ import { login, refreshToken, revokeToken } from '../controllers/auth.controller
 import validateRequest from '../middleware/validate.middleware.js';
 import { quizUpload } from '../controllers/employee.controllers.js';
 import authorize from '../middleware/authorize.middleware.js';
+import asyncMiddleware from '../middleware/async.middleware.js';
 
 import multer from 'multer';
 const fileStorageEngine = multer.diskStorage({
@@ -28,7 +29,7 @@ router.get('/', (req, res) => {
  * POST: User Login
  * req.body = email, password
  */
-router.post('/login', authenticateSchema, login);
+router.post('/login', asyncMiddleware(authenticateSchema), login);
 
 router.post('/upload', upload.single('file'), quizUpload);
 /**
