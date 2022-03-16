@@ -5,7 +5,6 @@ import jwtDecode from 'jwt-decode';
 
 export const semesterLeaderboardAndUserCourses = async (req, res) => {
   const { username } = req.user;
-  const { courseId } = req.params;
   const headers = req.headers.authorization;
   if (!headers)
     return res.status(401).send({
@@ -91,7 +90,6 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
       },
     },
     { $unwind: '$coursesInPeriod' },
-    { $match: { 'coursesInPeriod.courseId': courseId } },
     { $unwind: '$coursesInPeriod.activities' },
     {
       $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
@@ -106,22 +104,43 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
     },
     { $unwind: '$kahootsInPeriod' },
     { $unwind: '$kahootsInPeriod.finalScores' },
-    { $match: { 'kahootsInPeriod.finalScores.player': username } },
     {
-      $project: {
-        'kahootsInPeriod.finalScores.totalScore': 1,
-        'kahootsInPeriod.finalScores.correctAnswers': 1,
-        'kahootsInPeriod.finalScores.incorrectAnswers': 1,
-        'kahootsInPeriod.quizId': 1,
-        'kahootsInPeriod.title': 1,
-        _id: 0,
+      $group: {
+        _id: {
+          player: '$kahootsInPeriod.finalScores.player',
+          code: '$coursesInPeriod.code',
+          name: '$coursesInPeriod.name',
+          courseId: '$coursesInPeriod.courseId',
+        },
+        totalScore: { $sum: '$kahootsInPeriod.finalScores.totalScore' },
+        quizzesAttended: { $count: {} },
       },
     },
+    { $sort: { totalScore: -1 } },
+    {
+      $group: {
+        _id: false,
+        course: {
+          $push: {
+            _id: '$_id.player',
+            code: '$_id.code',
+            name: '$_id.name',
+            courseId: '$_id.courseId',
+            totalScore: '$totalScore',
+            quizzesAttended: '$quizzesAttended',
+          },
+        },
+      },
+    },
+
+    { $unwind: { path: '$course', includeArrayIndex: 'ranking' } },
+    { $match: { 'course._id': username } },
+    { $project: { rank: { $add: ['$ranking', 1] }, course: 1, totalScore: 1, quizzesAttended: 1, _id: 0 } },
   ]);
 
   try {
     res.status(201).json({
-      message: `StudyPlan: ${studyProgrammeCode}, courseId: ${courseId}`,
+      message: `StudyPlan: ${studyProgrammeCode}`,
       studyProgrammeData,
       getUserSpecific,
     });
