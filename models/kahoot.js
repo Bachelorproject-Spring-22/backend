@@ -14,6 +14,8 @@ const kahootSchema = new Schema(
     },
     quizId: {
       type: String,
+      trim: true,
+      lowercase: true,
       unique: true,
       default: function () {
         const _t = this;
