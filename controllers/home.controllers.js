@@ -266,6 +266,7 @@ export const getUserSpecificCourseResultsLeaderBoardQuiz = async (req, res) => {
         'kahootsInPeriod.finalScores.totalScore': 1,
         'kahootsInPeriod.finalScores.correctAnswers': 1,
         'kahootsInPeriod.finalScores.incorrectAnswers': 1,
+        'kahootsInPeriod.finalScores.rank': 1,
         'kahootsInPeriod.quizId': 1,
         'kahootsInPeriod.title': 1,
         'coursesInPeriod.code': 1,
@@ -275,6 +276,7 @@ export const getUserSpecificCourseResultsLeaderBoardQuiz = async (req, res) => {
       },
     },
   ]);
+
   try {
     res.status(201).json({
       message: `StudyPlan: ${studyProgrammeCode}, courseId: ${courseId}`,
