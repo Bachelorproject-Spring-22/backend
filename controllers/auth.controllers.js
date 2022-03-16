@@ -4,35 +4,34 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
+import { createBadRequest } from '../utils/errors.js';
+
 dotenv.config();
 // Local files
 import refreshTokenModel from '../models/refreshToken.js';
 import userModel from '../models/user.js';
 
 // User login with username and password
-export const login = async (req, res) => {
+export const login = async (req, res, next) => {
   const { username, password } = req.body;
   const ipAddress = req.ip;
 
   const user = await userModel.findOne({ username });
   if (!user || !bcrypt.compareSync(password, user.password)) {
-    return res.status(400).json({ error: 'Wrong email and/or password. Please try again.' });
+    return next(createBadRequest('Wrong email and/or password. Please try again.'));
   }
 
-  try {
-    const jwtToken = generateJwtToken(user);
-    const refreshToken = generateRefreshToken(user, ipAddress);
-    await refreshToken.save();
+  const jwtToken = generateJwtToken(user);
+  const refreshToken = generateRefreshToken(user, ipAddress);
+  await refreshToken.save();
 
-    setTokenCookie(res, refreshToken.token);
-    res.status(200).json({
-      message: 'User logged in successfully',
-      role: user.role,
-      jwtToken,
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'There was a server-side error with login. Please try again.' });
-  }
+  setTokenCookie(res, refreshToken.token);
+
+  res.status(200).json({
+    message: 'User logged in successfully',
+    role: user.role,
+    jwtToken,
+  });
 };
 
 export const revokeToken = async (req, res) => {
@@ -40,29 +39,25 @@ export const revokeToken = async (req, res) => {
   const token = req.cookies.refreshToken || req.body.token;
   const ipAddress = req.ip;
 
-  if (!token) return res.status(400).json({ error: 'Token is required' });
+  if (!token) return next(createBadRequest(400, 'Token is required'));
 
   // Users can revoke their own token and Managers can revoke any tokens
   if (!req.user.ownsToken(token) && req.user.role !== 'superAdmin') {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return next(createUnauthorized());
   }
 
   // Get refreshtoken using helper function
   // Set revoked information and save
-  try {
-    const refreshToken = await getRefreshToken(token);
-    refreshToken.revoked = Date.now();
-    refreshToken.revokedByIp = ipAddress;
-    await refreshToken.save();
 
-    res.status(200).json({
-      message: 'Token revoked successfully',
-      user: refreshToken.user.username,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: 'There was an error revoking the token', error });
-  }
+  const refreshToken = await getRefreshToken(token);
+  refreshToken.revoked = Date.now();
+  refreshToken.revokedByIp = ipAddress;
+  await refreshToken.save();
+
+  res.status(200).json({
+    message: 'Token revoked successfully',
+    user: refreshToken.user.username,
+  });
 };
 
 export const refreshToken = async (req, res) => {
@@ -72,32 +67,26 @@ export const refreshToken = async (req, res) => {
   // revokes old refresh token (if any)
   // saves new and old refresh token
   // Generates and returns new JWT token (valid for 15 minutes)
-  try {
-    const refreshToken = await getRefreshToken(token);
-    // destructure user out of refreshToken
-    const { user } = refreshToken;
+  const refreshToken = await getRefreshToken(token);
+  // destructure user out of refreshToken
+  const { user } = refreshToken;
+  if (!user) return createUnauthorized();
 
-    const newRefreshToken = generateRefreshToken(user, ipAddress);
-    refreshToken.revoked = Date.now();
-    refreshToken.revokedByIp = ipAddress;
-    refreshToken.replacedByIp = newRefreshToken.token;
-    await refreshToken.save();
-    await newRefreshToken.save();
+  const newRefreshToken = generateRefreshToken(user, ipAddress);
+  refreshToken.revoked = Date.now();
+  refreshToken.revokedByIp = ipAddress;
+  refreshToken.replacedByIp = newRefreshToken.token;
+  await refreshToken.save();
+  await newRefreshToken.save();
 
-    const jwtToken = generateJwtToken(user);
+  const jwtToken = generateJwtToken(user);
 
-    setTokenCookie(res, newRefreshToken.token);
-    res.status(200).json({
-      message: 'Token refreshed successfully',
-      user: user.username,
-      jwtToken,
-    });
-  } catch (error) {
-    res.status(500).json({
-      error: 'There was an error creating a new refresh token',
-      error,
-    });
-  }
+  setTokenCookie(res, newRefreshToken.token);
+  res.status(200).json({
+    message: 'Token refreshed successfully',
+    user: user.username,
+    jwtToken,
+  });
 };
 
 // helper functions
