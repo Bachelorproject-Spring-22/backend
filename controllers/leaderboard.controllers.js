@@ -54,7 +54,7 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
           courseId: '$coursesInPeriod.courseId',
         },
         totalScore: { $sum: '$kahootsInPeriod.finalScores.totalScore' },
-        attendedQuizzes: { $count: {} },
+        quizzesAttended: { $count: {} },
       },
     },
     { $sort: { totalScore: -1 } },
