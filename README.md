@@ -15,14 +15,27 @@ Source: https://medium.com/codechef-vit/a-better-project-structure-with-express-
 # Routes
 
 ```
-GET / - test route atm
-POST /login - user login
-POST /api/refresh - refresh token
-POST /api/revoke - revoke token
+ROUTE Auth '/'
+GET /                                       | Used to check connection
+POST /login                                 | Input: Username && password
+POST /upload                                | Input: File && courseId
+POST /api/refresh                           | Input: HTTPOnly cookie
+POST /api/revoke                            | Input: HTTPOnly cookie
 
-POST /superAdmin/users - creating a new user
+ROUTE Home '/home'
+GET /                                       | Current semester course name, code and quiz overall placement
+GET /:courseId                              | Course leaderboard top 3, individual quiz results
+GET /:courseId/:quizId                      | Individual quiz results
 
-GET /leaderboard - get semester leaderboard and logged in user quizzes and rank
-get /leaderboard/:courseId - get a specific course leaderboard
+ROUTE leaderboard '/leaderboard'
+GET /                                       | Current semester course name, code and quiz overall placement
+GET /:courseId                              | Course leaderboard top 3, individual quiz results
+
+ROUTE superAdmin '/superAdmin'
+POST /user                                  | Input: Username, role, email, password, programmeCode, year
+POST /course                                | Input: code, name, credits, year, semester, activities
+POST /programme                             | Input: ProgrammeCode, year, name, startTerm, semesters
+PATCH /programme/:studyProgrammeCode        | Input: array[username(s)]
+PATCH /programme/:courseId                  | Input: periodNumber, courseId
 
 ```

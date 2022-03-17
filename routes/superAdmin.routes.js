@@ -14,14 +14,14 @@ const router = express.Router();
  * POST
  * req.body = name, surname, role, password
  */
-router.post('/users', asyncMiddleware(createUser));
-
-router.post('/user', asyncMiddleware(updateStudyProgrammeWithUsers));
-
-router.post('/programme', asyncMiddleware(createStudyProgramme));
+router.post('/user', asyncMiddleware(createUser));
 
 router.post('/course', asyncMiddleware(createCourse));
 
-router.post('/update', asyncMiddleware(updateStudyPeriodWithCourse));
+router.post('/programme', asyncMiddleware(createStudyProgramme));
+
+router.patch('/programme/:studyProgrammeCode', asyncMiddleware(updateStudyProgrammeWithUsers));
+
+router.patch('/programme/:courseId', asyncMiddleware(updateStudyPeriodWithCourse));
 
 export default router;
