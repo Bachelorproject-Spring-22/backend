@@ -187,7 +187,7 @@ export const getUserSpecificCourseResultsLeaderBoard = async (req, res) => {
     { $unwind: '$kahootsInPeriod' },
     { $unwind: '$kahootsInPeriod.finalScores' },
     { $match: { 'kahootsInPeriod.finalScores.player': username } },
-    { $sort: { 'kahootsInPeriod.playedOn': 1 } }, // sort by ascending
+    { $sort: { 'kahootsInPeriod.playedOn': 1 } }, // sort by ascending date
     {
       $project: {
         'kahootsInPeriod.finalScores.totalScore': 1,
@@ -249,12 +249,14 @@ export const getUserSpecificCourseResultsLeaderBoardQuiz = async (req, res) => {
     { $unwind: { path: '$kahootsInPeriod', includeArrayIndex: 'quizNumber' } },
     { $unwind: '$kahootsInPeriod.finalScores' },
     { $match: { $and: [{ 'kahootsInPeriod.finalScores.player': username }, { 'kahootsInPeriod.quizId': quizId }] } },
+    { $sort: { 'kahootsInPeriod.playedOn': 1 } }, // sort by ascending date
     {
       $project: {
         'kahootsInPeriod.finalScores.totalScore': 1,
         'kahootsInPeriod.finalScores.correctAnswers': 1,
         'kahootsInPeriod.finalScores.incorrectAnswers': 1,
         'kahootsInPeriod.finalScores.rank': 1,
+        'kahootsInPeriod.playedOn': 1,
         'kahootsInPeriod.quizId': 1,
         'kahootsInPeriod.title': 1,
         'coursesInPeriod.code': 1,
