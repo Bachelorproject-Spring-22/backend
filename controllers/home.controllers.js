@@ -62,7 +62,7 @@ export const userSpecificCourseAndRank = async (req, res) => {
     {
       $group: {
         _id: false,
-        course: {
+        player: {
           $push: {
             user: '$_id.player',
             code: '$_id.code',
@@ -73,9 +73,9 @@ export const userSpecificCourseAndRank = async (req, res) => {
         },
       },
     },
-    { $unwind: { path: '$course', includeArrayIndex: 'ranking' } },
-    { $match: { 'course.user': username } },
-    { $project: { rank: { $add: ['$ranking', 1] }, course: 1, _id: 0 } },
+    { $unwind: { path: '$player', includeArrayIndex: 'ranking' } },
+    { $match: { 'player.user': username } },
+    { $project: { rank: { $add: ['$ranking', 1] }, player: 1, _id: 0 } },
   ]);
 
   res.status(201).json({
@@ -141,7 +141,7 @@ export const getUserSpecificCourseResultsLeaderBoard = async (req, res) => {
     {
       $group: {
         _id: false,
-        course: {
+        player: {
           $push: {
             _id: '$_id.player',
             code: '$_id.code',
@@ -153,8 +153,8 @@ export const getUserSpecificCourseResultsLeaderBoard = async (req, res) => {
         },
       },
     },
-    { $unwind: { path: '$course', includeArrayIndex: 'ranking' } },
-    { $project: { rank: { $add: ['$ranking', 1] }, course: 1, totalScore: 1, quizzesAttended: 1, _id: 0 } },
+    { $unwind: { path: '$player', includeArrayIndex: 'ranking' } },
+    { $project: { rank: { $add: ['$ranking', 1] }, player: 1, totalScore: 1, quizzesAttended: 1, _id: 0 } },
   ]);
 
   const getUserSpecific = await studyProgrammeModel.aggregate([
