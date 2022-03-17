@@ -64,7 +64,7 @@ async function bootstrap() {
   app.listen(process.env.PORT, () =>
     console.log(`Server listening on PORT: ${process.env.PORT} | NODE_ENV: ${process.env.NODE_ENV.toUpperCase()}`),
   );
-  connectToMongoDB();
+  await connectToMongoDB();
 }
 
 bootstrap();
