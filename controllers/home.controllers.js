@@ -137,7 +137,7 @@ export const getUserSpecificCourseResultsLeaderBoard = async (req, res) => {
       },
     },
     { $sort: { totalScore: -1 } },
-    { $limit: 3 },
+    { $limit: 5 },
     {
       $group: {
         _id: false,
