@@ -223,7 +223,101 @@ export const courseSpecificLeaderboard = async (req, res) => {
       },
     },
     { $unwind: { path: '$course', includeArrayIndex: 'ranking' } },
-    { $project: { rank: { $add: ['$ranking', 1] }, course: 1, totalScore: 1, quizzesAttended: 1, _id: 0 } },
+    {
+      $project: {
+        rank: { $add: ['$ranking', 1] },
+        course: 1,
+        totalScore: 1,
+        quizzesAttended: 1,
+        _id: 0,
+      },
+    },
+  ]);
+
+  res.status(201).json({
+    message: `StudyPlan: ${studyProgrammeCode}`,
+    studyProgrammeData,
+  });
+};
+
+export const selectQuizSnapshot = async (req, res, next) => {
+  const headers = req.headers.authorization;
+  const { courseId } = req.params;
+  const { startDate, endDate } = req.body;
+  if (!headers) return next(createUnauthorized());
+
+  const token = headers.split(' ')[1];
+  const { periodNumber, studyProgrammeCode } = jwtDecode(token);
+  const name = 'kahoot';
+  const variant = 'quiz';
+
+  const studyProgrammeData = await studyProgrammeModel.aggregate([
+    { $match: { studyProgrammeCode } },
+    { $unwind: '$studyPeriods' },
+    { $match: { 'studyPeriods.periodNumber': periodNumber } },
+    { $unwind: '$studyPeriods.courses' },
+    {
+      $lookup: {
+        from: 'courses',
+        localField: 'studyPeriods.courses',
+        foreignField: '_id',
+        as: 'coursesInPeriod',
+      },
+    },
+    { $unwind: '$coursesInPeriod' },
+    { $match: { 'coursesInPeriod.courseId': courseId } },
+    { $unwind: '$coursesInPeriod.activities' },
+    {
+      $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
+    },
+    {
+      $lookup: {
+        from: 'kahoots',
+        localField: 'coursesInPeriod.activities.sources',
+        foreignField: '_id',
+        as: 'kahootsInPeriod',
+      },
+    },
+    { $unwind: '$kahootsInPeriod' },
+    {
+      $match: {
+        'kahootsInPeriod.playedOn': {
+          $gte: new Date(startDate),
+          $lte: new Date(endDate),
+        },
+      },
+    },
+    { $unwind: '$kahootsInPeriod.finalScores' },
+    {
+      $group: {
+        _id: {
+          player: '$kahootsInPeriod.finalScores.player',
+          code: '$coursesInPeriod.code',
+          name: '$coursesInPeriod.name',
+          courseId: '$coursesInPeriod.courseId',
+        },
+        totalScore: { $sum: '$kahootsInPeriod.finalScores.totalScore' },
+        quizzesAttended: { $count: {} },
+      },
+    },
+    { $sort: { totalScore: -1 } },
+    {
+      $group: {
+        _id: false,
+        course: {
+          $push: {
+            _id: '$_id.player',
+            code: '$_id.code',
+            name: '$_id.name',
+            courseId: '$_id.courseId',
+            totalScore: '$totalScore',
+            quizzesAttended: '$quizzesAttended',
+          },
+        },
+      },
+    },
+    { $unwind: { path: '$course', includeArrayIndex: 'ranking' } },
+    { $project: { rank: { $add: ['$ranking', 1] }, course: 1, totalScore: 1, quizzesAttended: 1, date: 1, _id: 0 } },
   ]);
 
   res.status(201).json({
