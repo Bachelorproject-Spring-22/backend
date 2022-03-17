@@ -56,7 +56,7 @@ async function bootstrap() {
     res.status(error.status || 500);
     res.json({
       error: {
-        message: error.message,
+        message: error.message, // TODO: DONT DEPLOY THIS
       },
     });
   });
