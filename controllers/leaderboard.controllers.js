@@ -6,7 +6,7 @@ import { createUnauthorized } from '../utils/errors.js';
 export const semesterLeaderboardAndUserCourses = async (req, res) => {
   const { username } = req.user;
   const headers = req.headers.authorization;
-  if (!headers) return createUnauthorized();
+  if (!headers) return next(createUnauthorized());
 
   const token = headers.split(' ')[1];
   const { periodNumber, studyProgrammeCode } = jwtDecode(token);
@@ -146,7 +146,7 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
 export const courseSpecificLeaderboard = async (req, res) => {
   const headers = req.headers.authorization;
   const { courseId } = req.params;
-  if (!headers) return createUnauthorized();
+  if (!headers) return next(createUnauthorized());
 
   const token = headers.split(' ')[1];
   const { periodNumber, studyProgrammeCode } = jwtDecode(token);
