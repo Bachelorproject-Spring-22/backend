@@ -6,7 +6,7 @@ import { createBadRequest } from '../utils/errors.js';
 
 export const quizUpload = async (req, res, next) => {
   const filePath = req.file;
-  const courseId = req.body.text;
+  const courseId = req.body.courseId;
 
   if (!filePath) return next(createBadRequest('Please upload a file'));
   const dataFromExcel = readDataFromExcel(req.file.path);
