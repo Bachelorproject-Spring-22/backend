@@ -45,11 +45,6 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
       $group: {
         _id: {
           player: '$kahootsInPeriod.finalScores.player',
-          code: '$coursesInPeriod.code',
-          name: '$coursesInPeriod.name',
-          courseId: '$coursesInPeriod.courseId',
-          semester: '$studyPeriods.dates.term',
-          year: '$year',
         },
         totalScore: { $sum: '$kahootsInPeriod.finalScores.totalScore' },
         quizzesAttended: { $count: {} },
@@ -60,25 +55,21 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
     {
       $group: {
         _id: false,
-        course: {
+        player: {
           $push: {
             _id: '$_id.player',
-            code: '$_id.code',
-            name: '$_id.name',
             courseId: '$_id.courseId',
             totalScore: '$totalScore',
             quizzesAttended: '$quizzesAttended',
-            semester: '$_id.semester',
-            year: '$_id.year',
           },
         },
       },
     },
-    { $unwind: { path: '$course', includeArrayIndex: 'ranking' } },
+    { $unwind: { path: '$player', includeArrayIndex: 'ranking' } },
     {
       $project: {
         rank: { $add: ['$ranking', 1] },
-        course: 1,
+        player: 1,
         totalScore: 1,
         quizzesAttended: 1,
         _id: 0,
@@ -130,7 +121,7 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
     {
       $group: {
         _id: false,
-        course: {
+        player: {
           $push: {
             _id: '$_id.player',
             code: '$_id.code',
@@ -142,16 +133,45 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
         },
       },
     },
-
-    { $unwind: { path: '$course', includeArrayIndex: 'ranking' } },
-    { $match: { 'course._id': username } },
-    { $project: { rank: { $add: ['$ranking', 1] }, course: 1, totalScore: 1, quizzesAttended: 1, _id: 0 } },
+    { $unwind: { path: '$player', includeArrayIndex: 'ranking' } },
+    { $match: { 'player._id': username } },
+    { $project: { rank: { $add: ['$ranking', 1] }, player: 1, totalScore: 1, quizzesAttended: 1, _id: 0 } },
   ]);
-
+  const courseAndTotalAmountOfQuizzes = await studyProgrammeModel.aggregate([
+    { $match: { studyProgrammeCode } },
+    { $unwind: '$studyPeriods' },
+    { $match: { 'studyPeriods.periodNumber': periodNumber } },
+    { $unwind: '$studyPeriods.courses' },
+    {
+      $lookup: {
+        from: 'courses',
+        localField: 'studyPeriods.courses',
+        foreignField: '_id',
+        as: 'coursesInPeriod',
+      },
+    },
+    { $unwind: '$coursesInPeriod' },
+    { $unwind: '$coursesInPeriod.activities' },
+    {
+      $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
+    },
+    {
+      $project: {
+        totalAmountOfQuizzes: { $size: '$coursesInPeriod.activities.sources' },
+        code: '$coursesInPeriod.code',
+        name: '$coursesInPeriod.name',
+        year: '$year',
+        semester: '$studyPeriods.dates.term',
+        courseId: '$coursesInPeriod.courseId',
+        _id: 0,
+      },
+    },
+  ]);
   res.status(201).json({
     message: `StudyPlan: ${studyProgrammeCode}`,
     studyProgrammeData,
     getUserSpecific,
+    courseAndTotalAmountOfQuizzes,
   });
 };
 
@@ -198,8 +218,6 @@ export const courseSpecificLeaderboard = async (req, res) => {
       $group: {
         _id: {
           player: '$kahootsInPeriod.finalScores.player',
-          code: '$coursesInPeriod.code',
-          name: '$coursesInPeriod.name',
           courseId: '$coursesInPeriod.courseId',
         },
         totalScore: { $sum: '$kahootsInPeriod.finalScores.totalScore' },
@@ -210,11 +228,9 @@ export const courseSpecificLeaderboard = async (req, res) => {
     {
       $group: {
         _id: false,
-        course: {
+        player: {
           $push: {
             _id: '$_id.player',
-            code: '$_id.code',
-            name: '$_id.name',
             courseId: '$_id.courseId',
             totalScore: '$totalScore',
             quizzesAttended: '$quizzesAttended',
@@ -222,13 +238,42 @@ export const courseSpecificLeaderboard = async (req, res) => {
         },
       },
     },
-    { $unwind: { path: '$course', includeArrayIndex: 'ranking' } },
+    { $unwind: { path: '$player', includeArrayIndex: 'ranking' } },
     {
       $project: {
         rank: { $add: ['$ranking', 1] },
-        course: 1,
+        player: 1,
         totalScore: 1,
         quizzesAttended: 1,
+        _id: 0,
+      },
+    },
+  ]);
+  const courseAndTotalAmountOfQuizzes = await studyProgrammeModel.aggregate([
+    { $match: { studyProgrammeCode } },
+    { $unwind: '$studyPeriods' },
+    { $match: { 'studyPeriods.periodNumber': periodNumber } },
+    { $unwind: '$studyPeriods.courses' },
+    {
+      $lookup: {
+        from: 'courses',
+        localField: 'studyPeriods.courses',
+        foreignField: '_id',
+        as: 'coursesInPeriod',
+      },
+    },
+    { $unwind: '$coursesInPeriod' },
+    { $match: { 'coursesInPeriod.courseId': courseId } },
+    { $unwind: '$coursesInPeriod.activities' },
+    {
+      $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
+    },
+    {
+      $project: {
+        totalAmountOfQuizzes: { $size: '$coursesInPeriod.activities.sources' },
+        code: '$coursesInPeriod.code',
+        name: '$coursesInPeriod.name',
+        courseId: '$coursesInPeriod.courseId',
         _id: 0,
       },
     },
@@ -237,6 +282,7 @@ export const courseSpecificLeaderboard = async (req, res) => {
   res.status(201).json({
     message: `StudyPlan: ${studyProgrammeCode}`,
     studyProgrammeData,
+    courseAndTotalAmountOfQuizzes,
   });
 };
 
@@ -292,8 +338,6 @@ export const selectQuizSnapshot = async (req, res, next) => {
       $group: {
         _id: {
           player: '$kahootsInPeriod.finalScores.player',
-          code: '$coursesInPeriod.code',
-          name: '$coursesInPeriod.name',
           courseId: '$coursesInPeriod.courseId',
         },
         totalScore: { $sum: '$kahootsInPeriod.finalScores.totalScore' },
@@ -301,14 +345,13 @@ export const selectQuizSnapshot = async (req, res, next) => {
       },
     },
     { $sort: { totalScore: -1 } },
+
     {
       $group: {
         _id: false,
-        course: {
+        player: {
           $push: {
             _id: '$_id.player',
-            code: '$_id.code',
-            name: '$_id.name',
             courseId: '$_id.courseId',
             totalScore: '$totalScore',
             quizzesAttended: '$quizzesAttended',
@@ -316,12 +359,51 @@ export const selectQuizSnapshot = async (req, res, next) => {
         },
       },
     },
-    { $unwind: { path: '$course', includeArrayIndex: 'ranking' } },
-    { $project: { rank: { $add: ['$ranking', 1] }, course: 1, totalScore: 1, quizzesAttended: 1, date: 1, _id: 0 } },
+    { $unwind: { path: '$player', includeArrayIndex: 'ranking' } },
+    {
+      $project: {
+        rank: { $add: ['$ranking', 1] },
+        player: 1,
+        totalScore: 1,
+        quizzesAttended: 1,
+        date: 1,
+        _id: 0,
+      },
+    },
   ]);
 
+  const courseAndTotalAmountOfQuizzes = await studyProgrammeModel.aggregate([
+    { $match: { studyProgrammeCode } },
+    { $unwind: '$studyPeriods' },
+    { $match: { 'studyPeriods.periodNumber': periodNumber } },
+    { $unwind: '$studyPeriods.courses' },
+    {
+      $lookup: {
+        from: 'courses',
+        localField: 'studyPeriods.courses',
+        foreignField: '_id',
+        as: 'coursesInPeriod',
+      },
+    },
+    { $unwind: '$coursesInPeriod' },
+    { $match: { 'coursesInPeriod.courseId': courseId } },
+    { $unwind: '$coursesInPeriod.activities' },
+    {
+      $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
+    },
+    {
+      $project: {
+        totalAmountOfQuizzes: { $size: '$coursesInPeriod.activities.sources' },
+        code: '$coursesInPeriod.code',
+        name: '$coursesInPeriod.name',
+        courseId: '$coursesInPeriod.courseId',
+        _id: 0,
+      },
+    },
+  ]);
   res.status(201).json({
-    message: `StudyPlan: ${studyProgrammeCode}`,
+    message: `StudyPlan: ${studyProgrammeCode} | courseId: ${courseId} | periodNumber: ${periodNumber}`,
     studyProgrammeData,
+    courseAndTotalAmountOfQuizzes,
   });
 };
