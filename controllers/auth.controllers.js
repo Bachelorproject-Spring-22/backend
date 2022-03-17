@@ -70,7 +70,7 @@ export const refreshToken = async (req, res) => {
   const refreshToken = await getRefreshToken(token);
   // destructure user out of refreshToken
   const { user } = refreshToken;
-  if (!user) return createUnauthorized();
+  if (!user) return next(createUnauthorized());
 
   const newRefreshToken = generateRefreshToken(user, ipAddress);
   refreshToken.revoked = Date.now();

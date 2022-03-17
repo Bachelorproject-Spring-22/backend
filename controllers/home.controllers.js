@@ -6,16 +6,16 @@ import { createBadRequest, createUnauthorized } from '../utils/errors.js';
 export const userSpecificCourseAndRank = async (req, res) => {
   const { username } = req.user;
   const headers = req.headers.authorization;
-  if (!headers) return createUnauthorized();
+  if (!headers) return next(createUnauthorized());
 
   const token = headers.split(' ')[1];
   const { periodNumber, studyProgrammeCode } = jwtDecode(token);
   const name = 'kahoot';
   const variant = 'quiz';
-  if (!variant || !name) return createBadRequest('Variant and name is required');
+  if (!variant || !name) return next(createBadRequest('Variant and name is required'));
 
   const studyProgramme = await studyProgrammeModel.find({ studyProgrammeCode });
-  if (!studyProgramme) return createNotFound('StudyProgramme does not exist');
+  if (!studyProgramme) return next(createNotFound('StudyProgramme does not exist'));
 
   const studyProgrammeData = await studyProgrammeModel.aggregate([
     { $match: { studyProgrammeCode } },
@@ -88,7 +88,7 @@ export const getUserSpecificCourseResultsLeaderBoard = async (req, res) => {
   const { username } = req.user;
   const { courseId } = req.params;
   const headers = req.headers.authorization;
-  if (!headers) return createUnauthorized();
+  if (!headers) return next(createUnauthorized());
 
   const token = headers.split(' ')[1];
   const { periodNumber, studyProgrammeCode } = jwtDecode(token);
@@ -210,7 +210,7 @@ export const getUserSpecificCourseResultsLeaderBoardQuiz = async (req, res) => {
   const { username } = req.user;
   const { courseId, quizId } = req.params;
   const headers = req.headers.authorization;
-  if (!headers) return createUnauthorized();
+  if (!headers) return next(createUnauthorized());
 
   const token = headers.split(' ')[1];
   const { periodNumber, studyProgrammeCode } = jwtDecode(token);

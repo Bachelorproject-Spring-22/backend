@@ -22,26 +22,25 @@ const fileStorageEngine = multer.diskStorage({
 
 const upload = multer({ storage: fileStorageEngine });
 
-router.get('/', (req, res) => {
-  return res.status(200).json({ msg: 'check' });
-});
+router.get('/', (req, res) => res.status(200).json({ msg: 'check' }));
+
 /**
  * POST: User Login
  * req.body = email, password
  */
-router.post('/login', asyncMiddleware(authenticateSchema), login);
+router.post('/login', authenticateSchema, asyncMiddleware(login));
 
-router.post('/upload', upload.single('file'), quizUpload);
+router.post('/upload', upload.single('file'), asyncMiddleware(quizUpload));
 /**
  * POST: Revoke token
  * Authorize: Restrict access to the route to authenticated users with specified roles
  */
-router.post('/api/revoke', authorize(), revokeToken);
+router.post('/api/revoke', authorize(), asyncMiddleware(revokeToken));
 
 /**
  * POST: Refresh Token
  */
-router.post('/api/refresh', refreshToken);
+router.post('/api/refresh', asyncMiddleware(refreshToken));
 
 export default router;
 

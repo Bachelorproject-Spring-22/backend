@@ -2,11 +2,11 @@ import express from 'express';
 import {
   createUser,
   createStudyProgramme,
-  getSemesterData,
   createCourse,
   updateStudyPeriodWithCourse,
   updateStudyProgrammeWithUsers,
 } from '../controllers/superAdmin.controllers.js';
+import asyncMiddleware from '../middleware/async.middleware.js';
 
 const router = express.Router();
 
@@ -14,16 +14,14 @@ const router = express.Router();
  * POST
  * req.body = name, surname, role, password
  */
-router.post('/users', createUser);
+router.post('/users', asyncMiddleware(createUser));
 
-router.post('/user', updateStudyProgrammeWithUsers);
+router.post('/user', asyncMiddleware(updateStudyProgrammeWithUsers));
 
-router.post('/programme', createStudyProgramme);
+router.post('/programme', asyncMiddleware(createStudyProgramme));
 
-router.post('/course', createCourse);
+router.post('/course', asyncMiddleware(createCourse));
 
-router.post('/update', updateStudyPeriodWithCourse);
-
-router.post('/test', getSemesterData);
+router.post('/update', asyncMiddleware(updateStudyPeriodWithCourse));
 
 export default router;

@@ -8,15 +8,15 @@ export const quizUpload = async (req, res, next) => {
   const filePath = req.file;
   const courseId = req.body.text;
 
-  if (!filePath) return createBadRequest('Please upload a file');
+  if (!filePath) return next(createBadRequest('Please upload a file'));
   const dataFromExcel = readDataFromExcel(req.file.path);
-  if (!dataFromExcel) return createBadRequest('Upload a valid file');
+  if (!dataFromExcel) return next(createBadRequest('Upload a valid file'));
 
   const finalScores = dataFromExcel['Final Scores'].map((user) => user);
   const activityIds = [];
 
   const course = await courseModel.findOne({ courseId });
-  if (!course) return createBadRequest('Course not found');
+  if (!course) return next(createBadRequest('Course not found'));
 
   course.activities.forEach((kahoot) => {
     if (kahoot.name === 'kahoot' && kahoot.variant === 'quiz') {
@@ -51,7 +51,7 @@ export const quizUpload = async (req, res, next) => {
     }
   });
 
-  if (array.length !== 0) return createBadRequest('Quiz is already uploaded to this course');
+  if (array.length !== 0) return next(createBadRequest('Quiz is already uploaded to this course'));
 
   await kahoot.save();
   await courseModel.updateOne(

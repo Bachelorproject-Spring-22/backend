@@ -3,7 +3,7 @@ import courseModel from '../models/course.js';
 import studyProgrammeModel from '../models/studyProgramme.js';
 import userModel from '../models/user.js';
 
-import { createUnauthorized, createBadRequest } from '../utils/errors.js';
+import { createBadRequest, createNotFound } from '../utils/errors.js';
 // Helper functions
 
 const createActivitiesForCourse = (activities) => {
@@ -73,16 +73,14 @@ const createStudyPeriod = (semesterNumbers, programmeCode, year, name, startTerm
 export const createUser = async (req, res) => {
   const { username, role, email, password, programmeCode, year } = req.body;
   //validate fields
-  if (!username || !role || !password) {
-    return createBadRequest('Username, role, email or password is required');
-  }
+  if (!username || !role || !password) return next(createBadRequest('Username, role, email or password is required'));
 
   const userExists = await userModel.exists({ username });
-  if (userExists) return createBadRequest('User already exists');
+  if (userExists) return next(createBadRequest('User already exists'));
 
   if (email) {
     const emailExists = await userModel.exists({ email });
-    if (emailExists) return createBadRequest('Email already exists');
+    if (emailExists) return next(createBadRequest('Email already exists'));
   }
 
   const passwordHash = bcrypt.hashSync(password, 10);
@@ -108,11 +106,11 @@ export const createCourse = async (req, res) => {
   const { code, name, credits, year, semester, activities } = req.body;
 
   if (!code || !name || !credits || !year || !semester || !activities)
-    return createBadRequest('Code, name, credits, year, semester and activities are required');
+    return next(createBadRequest('Code, name, credits, year, semester and activities are required'));
 
   const courseId = `${code}_${semester[0]}${year}`;
   const courseExists = await courseModel.exists({ courseId });
-  if (courseExists) return createBadRequest('Course already exists');
+  if (courseExists) return next(createBadRequest('Course already exists'));
 
   const activitiesArray = createActivitiesForCourse(activities);
 
@@ -135,11 +133,11 @@ export const createStudyProgramme = async (req, res) => {
   const { programmeCode, year, name, startTerm, semesters } = req.body;
 
   if (!programmeCode || !year || !name || !startTerm || !semesters)
-    return createBadRequest('programmeCode, year, name, startTerm is required');
+    return next(createBadRequest('programmeCode, year, name, startTerm is required'));
 
   const studyProgrammeCode = `${programmeCode}${year}`;
   const studyProgrammeExists = await studyProgrammeModel.exists({ studyProgrammeCode });
-  if (studyProgrammeExists) return createBadRequest('Programme already exists');
+  if (studyProgrammeExists) return next(createBadRequest('Programme already exists'));
 
   const data = createStudyPeriod(semesters, programmeCode, year, name, startTerm);
 
@@ -161,13 +159,13 @@ export const createStudyProgramme = async (req, res) => {
 
 export const updateStudyProgrammeWithUsers = async (req, res) => {
   const { studyProgrammeCode, username } = req.body;
-  if (!studyProgrammeCode) return createBadRequest('studyProgrammeCode and user is required');
+  if (!studyProgrammeCode) return next(createBadRequest('studyProgrammeCode and user is required'));
 
   const checkUser = await userModel.find({ username }, { username: 1 }).sort({ _id: 1 }).lean();
-  if (checkUser.length === 0) return createBadRequest('User(s) does not exist');
+  if (checkUser.length === 0) return next(createBadRequest('User(s) does not exist'));
 
   const checkStudyProgrammeCode = await studyProgrammeModel.findOne({ studyProgrammeCode }).lean();
-  if (!checkStudyProgrammeCode) return createBadRequest('Programme does not exist');
+  if (!checkStudyProgrammeCode) return next(createBadRequest('Programme does not exist'));
 
   let checkIfUserIsAddedToProgramme = [];
   checkUser.forEach((user) => {
@@ -178,12 +176,11 @@ export const updateStudyProgrammeWithUsers = async (req, res) => {
     });
   });
 
-  if (checkIfUserIsAddedToProgramme.length !== 0) {
-    return res.status(400).json({
-      error: `Remove following user(s) from input [${checkIfUserIsAddedToProgramme}]`,
+  if (checkIfUserIsAddedToProgramme.length !== 0)
+    return createBadRequest(`Remove following user(s) from input [${checkIfUserIsAddedToProgramme}]`, {
       users: checkIfUserIsAddedToProgramme,
     });
-  }
+
   let users = [];
 
   // Used for existingUsers: https://stackoverflow.com/questions/1187518/how-to-get-the-difference-between-two-arrays-in-javascript
@@ -195,15 +192,11 @@ export const updateStudyProgrammeWithUsers = async (req, res) => {
   );
   const usersThatDoesNotExist = username.filter((user) => !existingUsers.includes(user));
 
-  try {
-    await studyProgrammeModel.updateOne({ studyProgrammeCode }, { $push: { users } });
-    res.status(201).json({
-      message: `Users added successfully [${existingUsers}]`,
-      warning: `Users that were not added [${usersThatDoesNotExist}]`,
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error when creating study programme' });
-  }
+  await studyProgrammeModel.updateOne({ studyProgrammeCode }, { $push: { users } });
+  res.status(201).json({
+    message: `Users added successfully [${existingUsers}]`,
+    warning: `Users that were not added [${usersThatDoesNotExist}]`,
+  });
 };
 
 //
@@ -220,13 +213,13 @@ export const updateStudyPeriodWithCourse = async (req, res) => {
 
   const { studyProgrammeCode, periodNumber, courseId } = req.body;
   if (!studyProgrammeCode || !periodNumber || !courseId)
-    return res.status(400).json({ error: 'StudyProgrammeCode and studyPeriod must be specified' });
+    return createBadRequest('StudyProgrammeCode and studyPeriod must be specified');
 
   const course = await courseModel.findOne({ courseId }).lean();
-  if (!course) return res.status(404).json({ error: 'Course does not exist' });
+  if (!course) return createNotFound('Course does not exist');
 
   const studyProgramme = await studyProgrammeModel.findOne({ studyProgrammeCode }).lean();
-  if (!studyProgramme) return res.status(404).json({ error: 'StudyProgramme does not exist' });
+  if (!studyProgramme) return createNotFound('StudyProgramme does not exist');
 
   const checkStudyPeriod = await studyProgrammeModel.aggregate([
     { $match: { studyProgrammeCode } },
@@ -244,7 +237,7 @@ export const updateStudyPeriodWithCourse = async (req, res) => {
       (studyPeriod) => studyPeriod.studyPeriods.courses.toString() === _id.toString(),
     );
     if (courseIsAlreadyAdded.length !== 0)
-      return res.status(404).json({ error: `${courseId} is already added to semester ${periodNumber}` });
+      return createBadRequest(`${courseId} is already added to semester ${periodNumber}`);
   }
 
   await studyProgrammeModel.updateOne(
@@ -253,29 +246,7 @@ export const updateStudyPeriodWithCourse = async (req, res) => {
     { arrayFilters: [{ 'studyPeriods.periodNumber': periodNumber }] },
   );
 
-  try {
-    res.status(201).json({
-      message: `Updated Study plan successfully added Course: ${course.name} ${course.code} (${courseId}) to SemesterPeriod: (${periodNumber})`,
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error when getting study programme' });
-  }
-};
-
-export const getSemesterData = async (req, res) => {
-  const { studyProgrammeCode } = req.body;
-
-  if (!studyProgrammeCode) {
-    return res.status(400).json({ error: 'StudyProgramme code is required' });
-  }
-
-  try {
-    const getStudyProgrammeCode = await studyProgrammeModel.findOne({ studyProgrammeCode });
-    res.status(201).json({
-      message: 'StudyProgramme resolved successfully',
-      studyProgramme: getStudyProgrammeCode,
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error when getting study programme' });
-  }
+  res.status(201).json({
+    message: `Updated Study plan successfully added Course: ${course.name} ${course.code} (${courseId}) to SemesterPeriod: (${periodNumber})`,
+  });
 };
