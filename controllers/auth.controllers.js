@@ -34,32 +34,6 @@ export const login = async (req, res, next) => {
   });
 };
 
-export const revokeToken = async (req, res) => {
-  // Accept token from request body or cookie
-  const token = req.cookies.refreshToken || req.body.token;
-  const ipAddress = req.ip;
-
-  if (!token) return next(createBadRequest(400, 'Token is required'));
-
-  // Users can revoke their own token and Managers can revoke any tokens
-  if (!req.user.ownsToken(token) && req.user.role !== 'superAdmin') {
-    return next(createUnauthorized());
-  }
-
-  // Get refreshtoken using helper function
-  // Set revoked information and save
-
-  const refreshToken = await getRefreshToken(token);
-  refreshToken.revoked = Date.now();
-  refreshToken.revokedByIp = ipAddress;
-  await refreshToken.save();
-
-  res.status(200).json({
-    message: 'Token revoked successfully',
-    user: refreshToken.user.username,
-  });
-};
-
 export const refreshToken = async (req, res) => {
   const token = req.cookies.refreshToken;
   const ipAddress = req.ip;
@@ -86,6 +60,32 @@ export const refreshToken = async (req, res) => {
     message: 'Token refreshed successfully',
     user: user.username,
     jwtToken,
+  });
+};
+
+export const revokeToken = async (req, res) => {
+  // Accept token from request body or cookie
+  const token = req.cookies.refreshToken || req.body.token;
+  const ipAddress = req.ip;
+
+  if (!token) return next(createBadRequest(400, 'Token is required'));
+
+  // Users can revoke their own token and Managers can revoke any tokens
+  if (!req.user.ownsToken(token) && req.user.role !== 'superAdmin') {
+    return next(createUnauthorized());
+  }
+
+  // Get refreshtoken using helper function
+  // Set revoked information and save
+
+  const refreshToken = await getRefreshToken(token);
+  refreshToken.revoked = Date.now();
+  refreshToken.revokedByIp = ipAddress;
+  await refreshToken.save();
+
+  res.status(200).json({
+    message: 'Token revoked successfully',
+    user: refreshToken.user.username,
   });
 };
 
