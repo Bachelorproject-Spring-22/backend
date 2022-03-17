@@ -187,11 +187,13 @@ export const getUserSpecificCourseResultsLeaderBoard = async (req, res) => {
     { $unwind: '$kahootsInPeriod' },
     { $unwind: '$kahootsInPeriod.finalScores' },
     { $match: { 'kahootsInPeriod.finalScores.player': username } },
+    { $sort: { 'kahootsInPeriod.playedOn': 1 } }, // sort by ascending
     {
       $project: {
         'kahootsInPeriod.finalScores.totalScore': 1,
         'kahootsInPeriod.finalScores.correctAnswers': 1,
         'kahootsInPeriod.finalScores.incorrectAnswers': 1,
+        'kahootsInPeriod.playedOn': 1,
         'kahootsInPeriod.quizId': 1,
         'kahootsInPeriod.title': 1,
         _id: 0,
