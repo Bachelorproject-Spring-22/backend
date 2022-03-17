@@ -158,7 +158,8 @@ export const createStudyProgramme = async (req, res) => {
 //
 
 export const updateStudyProgrammeWithUsers = async (req, res) => {
-  const { studyProgrammeCode, username } = req.body;
+  const studyProgrammeCode = req.params.studyProgrammeCode;
+  const { username } = req.body;
   if (!studyProgrammeCode) return next(createBadRequest('studyProgrammeCode and user is required'));
 
   const checkUser = await userModel.find({ username }, { username: 1 }).sort({ _id: 1 }).lean();
@@ -210,8 +211,8 @@ export const updateStudyPeriodWithCourse = async (req, res) => {
   // Check if studyProgramme exists | x
   // Check if course is already added to the courseGroup | x
   // Update courseGroup with the new course | x
-
-  const { studyProgrammeCode, periodNumber, courseId } = req.body;
+  const courseId = req.params.courseId;
+  const { studyProgrammeCode, periodNumber } = req.body;
   if (!studyProgrammeCode || !periodNumber || !courseId)
     return createBadRequest('StudyProgrammeCode and studyPeriod must be specified');
 
