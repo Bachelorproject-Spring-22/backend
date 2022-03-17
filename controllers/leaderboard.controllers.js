@@ -48,6 +48,8 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
           code: '$coursesInPeriod.code',
           name: '$coursesInPeriod.name',
           courseId: '$coursesInPeriod.courseId',
+          semester: '$studyPeriods.dates.term',
+          year: '$year',
         },
         totalScore: { $sum: '$kahootsInPeriod.finalScores.totalScore' },
         quizzesAttended: { $count: {} },
@@ -66,12 +68,22 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
             courseId: '$_id.courseId',
             totalScore: '$totalScore',
             quizzesAttended: '$quizzesAttended',
+            semester: '$_id.semester',
+            year: '$_id.year',
           },
         },
       },
     },
     { $unwind: { path: '$course', includeArrayIndex: 'ranking' } },
-    { $project: { rank: { $add: ['$ranking', 1] }, course: 1, totalScore: 1, quizzesAttended: 1, _id: 0 } },
+    {
+      $project: {
+        rank: { $add: ['$ranking', 1] },
+        course: 1,
+        totalScore: 1,
+        quizzesAttended: 1,
+        _id: 0,
+      },
+    },
   ]);
 
   const getUserSpecific = await studyProgrammeModel.aggregate([
