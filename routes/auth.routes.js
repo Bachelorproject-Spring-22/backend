@@ -31,16 +31,17 @@ router.get('/', (req, res) => res.status(200).json({ msg: 'check' }));
 router.post('/login', authenticateSchema, asyncMiddleware(login));
 
 router.post('/upload', upload.single('file'), asyncMiddleware(quizUpload));
-/**
- * POST: Revoke token
- * Authorize: Restrict access to the route to authenticated users with specified roles
- */
-router.post('/api/revoke', authorize(), asyncMiddleware(revokeToken));
 
 /**
  * POST: Refresh Token
  */
 router.post('/api/refresh', asyncMiddleware(refreshToken));
+
+/**
+ * POST: Revoke token
+ * Authorize: Restrict access to the route to authenticated users with specified roles
+ */
+router.post('/api/revoke', authorize(), asyncMiddleware(revokeToken));
 
 export default router;
 
