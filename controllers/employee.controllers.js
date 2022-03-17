@@ -24,8 +24,13 @@ export const quizUpload = async (req, res, next) => {
       activityIds.push(kahoots);
     }
   });
+
+  const titleFromExcel = dataFromExcel['Overview'][0].A;
+  var sanitized = titleFromExcel.replace(/[^\w\s]/gi, '');
+  const title = sanitized.replace(/\s\s+/g, '');
+
   const kahoot = new kahootModel({
-    title: dataFromExcel['Overview'][0].A,
+    title,
     playedOn: dataFromExcel['Overview'][1].B,
     hostedBy: dataFromExcel['Overview'][2].B,
     numberOfPlayers: dataFromExcel['Overview'][3].B,
@@ -36,22 +41,6 @@ export const quizUpload = async (req, res, next) => {
     },
     finalScores,
   });
-
-  const date = new Date(kahoot.playedOn);
-  const day = date.getDate();
-  const month = date.getMonth();
-  const getActivities = await kahootModel.find({ activityIds });
-
-  const createQuizId = `${kahoot.title}-${day}-${month}`;
-  const array = [];
-
-  getActivities.forEach((activity) => {
-    if (activity.quizId === createQuizId) {
-      array.push(activity.quizId);
-    }
-  });
-
-  if (array.length !== 0) return next(createBadRequest('Quiz is already uploaded to this course'));
 
   await kahoot.save();
   await courseModel.updateOne(
