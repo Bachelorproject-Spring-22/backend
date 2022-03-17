@@ -28,10 +28,14 @@ export const quizUpload = async (req, res, next) => {
   const titleFromExcel = dataFromExcel['Overview'][0].A;
   var sanitized = titleFromExcel.replace(/[^\w\s]/gi, '');
   const title = sanitized.replace(/\s\s+/g, '');
+  const utc = dataFromExcel['Overview'][1].B;
 
+  // https://stackoverflow.com/questions/38735927/add-offset-to-utc-date-in-javascript
+  // Add one hour to time because of timezone difference
+  const playedOn = new Date(new Date(utc) * 1 + 60 * 60 * 1000);
   const kahoot = new kahootModel({
     title,
-    playedOn: dataFromExcel['Overview'][1].B,
+    playedOn,
     hostedBy: dataFromExcel['Overview'][2].B,
     numberOfPlayers: dataFromExcel['Overview'][3].B,
     course: {
@@ -41,7 +45,6 @@ export const quizUpload = async (req, res, next) => {
     },
     finalScores,
   });
-
   await kahoot.save();
   await courseModel.updateOne(
     { courseId },
