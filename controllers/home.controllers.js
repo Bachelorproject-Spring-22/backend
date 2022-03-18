@@ -64,9 +64,9 @@ export const userSpecificCourseAndRank = async (req, res) => {
         _id: false,
         player: {
           $push: {
-            user: '$_id.player',
+            name: '$_id.player',
             code: '$_id.code',
-            name: '$_id.name',
+            courseName: '$_id.name',
             courseId: '$_id.courseId',
             quizzesAttended: '$quizzesAttended',
           },
@@ -74,7 +74,7 @@ export const userSpecificCourseAndRank = async (req, res) => {
       },
     },
     { $unwind: { path: '$player', includeArrayIndex: 'ranking' } },
-    { $match: { 'player.user': username } },
+    { $match: { 'player.name': username } },
     { $project: { rank: { $add: ['$ranking', 1] }, player: 1, _id: 0 } },
   ]);
 
@@ -143,9 +143,9 @@ export const getUserSpecificCourseResultsLeaderBoard = async (req, res) => {
         _id: false,
         player: {
           $push: {
-            _id: '$_id.player',
+            name: '$_id.player',
             code: '$_id.code',
-            name: '$_id.name',
+            courseName: '$_id.name',
             courseId: '$_id.courseId',
             totalScore: '$totalScore',
             quizzesAttended: '$quizzesAttended',
