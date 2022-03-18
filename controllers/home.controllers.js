@@ -1,12 +1,13 @@
 import studyProgrammeModel from '../models/studyProgramme.js';
 import jwtDecode from 'jwt-decode';
 
-import { createBadRequest, createUnauthorized } from '../utils/errors.js';
+import { createBadRequest, createNotFound, createUnauthorized } from '../utils/errors.js';
 
-export const userSpecificCourseAndRank = async (req, res) => {
+export const userSpecificCourseAndRank = async (req, res, next) => {
   const { username } = req.user;
   const headers = req.headers.authorization;
   if (!headers) return next(createUnauthorized());
+  if (!username) return next(createNotFound('username not found'));
 
   const token = headers.split(' ')[1];
   const { periodNumber, studyProgrammeCode } = jwtDecode(token);
@@ -84,11 +85,13 @@ export const userSpecificCourseAndRank = async (req, res) => {
   });
 };
 
-export const getUserSpecificCourseResultsLeaderBoard = async (req, res) => {
+export const getUserSpecificCourseResultsLeaderBoard = async (req, res, next) => {
   const { username } = req.user;
   const { courseId } = req.params;
   const headers = req.headers.authorization;
   if (!headers) return next(createUnauthorized());
+  if (!courseId) return next(createNotFound('Course id not found'));
+  if (!username) return next(createNotFound('Username not found'));
 
   const token = headers.split(' ')[1];
   const { periodNumber, studyProgrammeCode } = jwtDecode(token);
@@ -208,11 +211,13 @@ export const getUserSpecificCourseResultsLeaderBoard = async (req, res) => {
   });
 };
 
-export const getUserSpecificCourseResultsLeaderBoardQuiz = async (req, res) => {
+export const getUserSpecificCourseResultsLeaderBoardQuiz = async (req, res, next) => {
   const { username } = req.user;
   const { courseId, quizId } = req.params;
   const headers = req.headers.authorization;
   if (!headers) return next(createUnauthorized());
+  if (!courseId || !quizId) return next(createNotFound('Course id or quiz id not found'));
+  if (!username) return next(createNotFound('Username not found'));
 
   const token = headers.split(' ')[1];
   const { periodNumber, studyProgrammeCode } = jwtDecode(token);
