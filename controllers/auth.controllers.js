@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
-import { createBadRequest } from '../utils/errors.js';
+import { createBadRequest, createNotFound } from '../utils/errors.js';
 
 dotenv.config();
 // Local files
@@ -15,6 +15,8 @@ import userModel from '../models/user.js';
 export const login = async (req, res, next) => {
   const { username, password } = req.body;
   const ipAddress = req.ip;
+
+  if (!username || !password) return next(createBadRequest('Provided username and password'));
 
   const user = await userModel.findOne({ username });
   if (!user || !bcrypt.compareSync(password, user.password)) {
@@ -34,7 +36,7 @@ export const login = async (req, res, next) => {
   });
 };
 
-export const refreshToken = async (req, res) => {
+export const refreshToken = async (req, res, next) => {
   const token = req.cookies.refreshToken;
   const ipAddress = req.ip;
   // Generates refresh token using user information and ip address
@@ -63,12 +65,12 @@ export const refreshToken = async (req, res) => {
   });
 };
 
-export const revokeToken = async (req, res) => {
+export const revokeToken = async (req, res, next) => {
   // Accept token from request body or cookie
   const token = req.cookies.refreshToken || req.body.token;
   const ipAddress = req.ip;
 
-  if (!token) return next(createBadRequest(400, 'Token is required'));
+  if (!token) return next(createBadRequest('Token is required'));
 
   // Users can revoke their own token and Managers can revoke any tokens
   if (!req.user.ownsToken(token) && req.user.role !== 'superAdmin') {
@@ -79,6 +81,8 @@ export const revokeToken = async (req, res) => {
   // Set revoked information and save
 
   const refreshToken = await getRefreshToken(token);
+  if (!refreshToken) return next(createNotFound('Refresh token not found'));
+
   refreshToken.revoked = Date.now();
   refreshToken.revokedByIp = ipAddress;
   await refreshToken.save();
