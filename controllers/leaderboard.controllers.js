@@ -1,9 +1,9 @@
 import studyProgrammeModel from '../models/studyProgramme.js';
 import jwtDecode from 'jwt-decode';
 
-import { createUnauthorized } from '../utils/errors.js';
+import { createUnauthorized, createBadRequest, createNotFound } from '../utils/errors.js';
 
-export const semesterLeaderboardAndUserCourses = async (req, res) => {
+export const semesterLeaderboardAndUserCourses = async (req, res, next) => {
   const { username } = req.user;
   const headers = req.headers.authorization;
   if (!headers) return next(createUnauthorized());
@@ -191,11 +191,14 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
   });
 };
 
-export const courseSpecificLeaderboard = async (req, res) => {
+export const courseSpecificLeaderboard = async (req, res, next) => {
   const headers = req.headers.authorization;
   const { username } = req.user;
   const { courseId } = req.params;
   if (!headers) return next(createUnauthorized());
+
+  if (!username) return next(createNotFound('Username not found '));
+  if (!courseId) return next(createBadRequest('Please enter a valid course id'));
 
   const token = headers.split(' ')[1];
   const { periodNumber, studyProgrammeCode } = jwtDecode(token);
@@ -330,6 +333,9 @@ export const selectQuizSnapshot = async (req, res, next) => {
   const { courseId } = req.params;
   const { startDate, endDate } = req.body;
   if (!headers) return next(createUnauthorized());
+
+  if (!courseId) return next(createNotFound('Course id not found'));
+  if (!startDate || !endDate) return next(createBadRequest('Please enter a valid timeframe'));
 
   const token = headers.split(' ')[1];
   const { periodNumber, studyProgrammeCode } = jwtDecode(token);
