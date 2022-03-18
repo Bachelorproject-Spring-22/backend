@@ -142,7 +142,7 @@ function generateJwtToken(user) {
     },
     process.env.TOKEN_SECRET,
     {
-      expiresIn: `${exp}`,
+      expiresIn: `${exp.toString()}`,
     },
   );
 }
