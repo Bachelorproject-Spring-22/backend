@@ -70,10 +70,11 @@ const createStudyPeriod = (semesterNumbers, programmeCode, year, name, startTerm
 //
 
 // Super Admins can invite users
-export const createUser = async (req, res) => {
+export const createUser = async (req, res, next) => {
   const { username, role, email, password, programmeCode, year } = req.body;
   //validate fields
-  if (!username || !role || !password) return next(createBadRequest('Username, role, email or password is required'));
+  if (!username || !role || !password || !programmeCode || !year)
+    return next(createBadRequest('Username, role or programmeCode or year password are required'));
 
   const userExists = await userModel.exists({ username });
   if (userExists) return next(createBadRequest('User already exists'));
@@ -102,7 +103,7 @@ export const createUser = async (req, res) => {
 // @COURSE
 //
 
-export const createCourse = async (req, res) => {
+export const createCourse = async (req, res, next) => {
   const { code, name, credits, year, semester, activities } = req.body;
 
   if (!code || !name || !credits || !year || !semester || !activities)
@@ -129,7 +130,7 @@ export const createCourse = async (req, res) => {
 //
 // @STUDYPROGRAMME
 //
-export const createStudyProgramme = async (req, res) => {
+export const createStudyProgramme = async (req, res, next) => {
   const { programmeCode, year, name, startTerm, semesters } = req.body;
 
   if (!programmeCode || !year || !name || !startTerm || !semesters)
@@ -157,7 +158,7 @@ export const createStudyProgramme = async (req, res) => {
 // @UPDATESTUDYPROGRAMMEWITHUSERS
 //
 
-export const updateStudyProgrammeWithUsers = async (req, res) => {
+export const updateStudyProgrammeWithUsers = async (req, res, next) => {
   const studyProgrammeCode = req.params.studyProgrammeCode;
   const { username } = req.body;
   if (!studyProgrammeCode) return next(createBadRequest('studyProgrammeCode and user is required'));
@@ -204,7 +205,7 @@ export const updateStudyProgrammeWithUsers = async (req, res) => {
 // @UPDATECOURSEWIRHCOURSE
 //
 
-export const updateStudyPeriodWithCourse = async (req, res) => {
+export const updateStudyPeriodWithCourse = async (req, res, next) => {
   // Pseudo code
   // Check if req.body contains the required info | x
   // Check if course exist | x
@@ -213,14 +214,15 @@ export const updateStudyPeriodWithCourse = async (req, res) => {
   // Update courseGroup with the new course | x
   const courseId = req.params.courseId;
   const { studyProgrammeCode, periodNumber } = req.body;
-  if (!studyProgrammeCode || !periodNumber || !courseId)
+  if (!studyProgrammeCode || !periodNumber)
     return createBadRequest('StudyProgrammeCode and studyPeriod must be specified');
 
+  if (!courseId) return next(createNotFound('Course id not found'));
   const course = await courseModel.findOne({ courseId }).lean();
-  if (!course) return createNotFound('Course does not exist');
+  if (!course) return next(createNotFound('Course does not exist'));
 
   const studyProgramme = await studyProgrammeModel.findOne({ studyProgrammeCode }).lean();
-  if (!studyProgramme) return createNotFound('StudyProgramme does not exist');
+  if (!studyProgramme) return next(createNotFound('StudyProgramme does not exist'));
 
   const checkStudyPeriod = await studyProgrammeModel.aggregate([
     { $match: { studyProgrammeCode } },
@@ -238,7 +240,7 @@ export const updateStudyPeriodWithCourse = async (req, res) => {
       (studyPeriod) => studyPeriod.studyPeriods.courses.toString() === _id.toString(),
     );
     if (courseIsAlreadyAdded.length !== 0)
-      return createBadRequest(`${courseId} is already added to semester ${periodNumber}`);
+      return next(createBadRequest(`${courseId} is already added to semester ${periodNumber}`));
   }
 
   await studyProgrammeModel.updateOne(
