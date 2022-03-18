@@ -6,6 +6,7 @@ import passport from 'passport';
 import cors from 'cors';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
+import compression from 'compression';
 import { connectToMongoDB } from './config/mongoose.js ';
 
 import authRoute from './routes/auth.routes.js';
@@ -30,6 +31,7 @@ async function bootstrap() {
   // parse request of content-type - application/x-www-form-urlencoded
   app.use(express.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }));
   app.use(cookieParser());
+  app.use(compression());
 
   if (process.env && process.env.NODE_ENV && process.env.NODE_ENV !== 'production') {
     app.use(cors({ credentials: true, origin: process.env.FRONTENDHOST }));
