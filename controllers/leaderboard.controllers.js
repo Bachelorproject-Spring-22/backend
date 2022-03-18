@@ -281,7 +281,7 @@ export const courseSpecificLeaderboard = async (req, res) => {
     },
   ]);
 
-  // Hide player names that are lower than rank five or current user
+  // Add anonymous usernames except top 5 or current user
 
   const studyProgrammeData = getUserData.map(({ player, rank }) =>
     rank <= 5 || player._id === username ? { player, rank } : { ...player, _id: 'Anonymous', rank },
