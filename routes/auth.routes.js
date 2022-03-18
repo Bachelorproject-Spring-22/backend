@@ -6,7 +6,7 @@ const router = Router();
 import '../middleware/authorize.middleware.js';
 import { login, refreshToken, revokeToken } from '../controllers/auth.controllers.js';
 import validateRequest from '../middleware/validate.middleware.js';
-import { quizUpload } from '../controllers/employee.controllers.js';
+import { quizUpload } from '../controllers/upload.controllers.js';
 import authorize from '../middleware/authorize.middleware.js';
 import asyncMiddleware from '../middleware/async.middleware.js';
 
