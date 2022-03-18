@@ -177,6 +177,7 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
 
 export const courseSpecificLeaderboard = async (req, res) => {
   const headers = req.headers.authorization;
+  const { username } = req.user;
   const { courseId } = req.params;
   if (!headers) return next(createUnauthorized());
 
@@ -185,7 +186,7 @@ export const courseSpecificLeaderboard = async (req, res) => {
   const name = 'kahoot';
   const variant = 'quiz';
 
-  const studyProgrammeData = await studyProgrammeModel.aggregate([
+  const getUserData = await studyProgrammeModel.aggregate([
     { $match: { studyProgrammeCode } },
     { $unwind: '$studyPeriods' },
     { $match: { 'studyPeriods.periodNumber': periodNumber } },
@@ -278,6 +279,12 @@ export const courseSpecificLeaderboard = async (req, res) => {
       },
     },
   ]);
+
+  // Add anonymous usernames except top 5 or current user
+
+  const studyProgrammeData = getUserData.map(({ player, rank }) =>
+    rank <= 5 || player._id === username ? { player, rank } : { player: { ...player, _id: 'Anonymous' }, rank },
+  );
 
   res.status(201).json({
     message: `StudyPlan: ${studyProgrammeCode}`,
