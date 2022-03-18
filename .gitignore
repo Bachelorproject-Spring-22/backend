@@ -105,3 +105,6 @@ dist
 
 # DS Store
 .DS_STORE
+
+# Excel quiz sheets
+tmp/
