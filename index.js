@@ -31,7 +31,7 @@ async function bootstrap() {
   app.use(express.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }));
   app.use(cookieParser());
 
-  if (process.env && process.env.NODE_ENV && process.env.NODE_ENV !== 'production') {
+  if (!process.env && !process.env.NODE_ENV && !process.env.NODE_ENV === 'production') {
     app.use(cors({ credentials: true, origin: process.env.FRONTENDHOST }));
   } else {
     app.use(cors());
