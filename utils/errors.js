@@ -2,10 +2,10 @@ let error = {};
 
 // ERROR
 
-export const createBadRequest = (message, object) => {
+export const createBadRequest = (message) => {
   error.status = 400;
   error.message = message;
-  return error, object;
+  return error;
 };
 
 export const createUnauthorized = () => {
