@@ -43,7 +43,6 @@ async function bootstrap() {
   app.use('/', authRoute);
   app.use('/home', authUser, homeRoute);
   app.use('/leaderboard', authUser, leaderboardRoute);
-  //app.use('/superAdmin', userRoute);
   app.use('/superAdmin', authUser, hasRole.SuperAdmin, userRoute);
 
   app.use((req, res, next) => {
@@ -56,7 +55,7 @@ async function bootstrap() {
     res.status(error.status || 500);
     res.json({
       error: {
-        message: error.message,
+        message: 'Internal server error',
       },
     });
   });
