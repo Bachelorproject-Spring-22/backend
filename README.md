@@ -30,6 +30,7 @@ GET /:courseId/:quizId                      | Individual quiz results
 ROUTE leaderboard '/leaderboard'
 GET /                                       | Current semester course name, code and quiz overall placement
 GET /:courseId                              | Course leaderboard top 3, individual quiz results
+POST /:courseId                             | Input: startDate, endDate
 
 ROUTE superAdmin '/superAdmin'
 POST /user                                  | Input: Username, role, email, password, programmeCode, year
