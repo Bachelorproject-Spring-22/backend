@@ -55,7 +55,7 @@ async function bootstrap() {
     res.status(error.status || 500);
     res.json({
       error: {
-        message: 'Internal server error',
+        message: error.message,
       },
     });
   });
