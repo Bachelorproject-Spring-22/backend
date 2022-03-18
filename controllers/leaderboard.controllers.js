@@ -315,7 +315,7 @@ export const courseSpecificLeaderboard = async (req, res) => {
   // Add anonymous usernames except top 5 or current user
 
   const studyProgrammeData = getUserData.map(({ player, rank }) =>
-    rank <= 5 || player._id === username ? { player, rank } : { player: { ...player, _id: 'anonymous' }, rank },
+    rank <= 5 || player.name === username ? { player, rank } : { player: { ...player, name: 'anonymous' }, rank },
   );
 
   res.status(201).json({
