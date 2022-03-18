@@ -2,7 +2,7 @@ import kahootModel from '../models/kahoot.js';
 import courseModel from '../models/course.js';
 
 import { readDataFromExcel } from '../config/excelToJson.js';
-import { createBadRequest } from '../utils/errors.js';
+import { createBadRequest, createNotFound } from '../utils/errors.js';
 
 export const quizUpload = async (req, res, next) => {
   const filePath = req.file;
@@ -19,7 +19,7 @@ export const quizUpload = async (req, res, next) => {
   const activityIds = [];
 
   const course = await courseModel.findOne({ courseId });
-  if (!course) return next(createBadRequest('Course not found'));
+  if (!course) return next(createNotFound('Course not found'));
 
   course.activities.forEach((kahoot) => {
     if (kahoot.name === name && kahoot.variant === variant) {
