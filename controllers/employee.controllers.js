@@ -8,6 +8,9 @@ export const quizUpload = async (req, res, next) => {
   const filePath = req.file;
   const courseId = req.body.courseId;
 
+  const name = 'kahoot';
+  const variant = 'quiz';
+
   if (!filePath) return next(createBadRequest('Please upload a file'));
   const dataFromExcel = readDataFromExcel(req.file.path);
   if (!dataFromExcel) return next(createBadRequest('Upload a valid file'));
@@ -19,7 +22,7 @@ export const quizUpload = async (req, res, next) => {
   if (!course) return next(createBadRequest('Course not found'));
 
   course.activities.forEach((kahoot) => {
-    if (kahoot.name === 'kahoot' && kahoot.variant === 'quiz') {
+    if (kahoot.name === name && kahoot.variant === variant) {
       const [kahoots] = kahoot.sources;
       activityIds.push(kahoots);
     }
@@ -31,7 +34,7 @@ export const quizUpload = async (req, res, next) => {
   const utc = dataFromExcel['Overview'][1].B;
 
   // https://stackoverflow.com/questions/38735927/add-offset-to-utc-date-in-javascript
-  // Add one hour to time because of timezone difference
+  // Add one hour to playedOn because of timezone difference
   const playedOn = new Date(new Date(utc) * 1 + 60 * 60 * 1000);
   const kahoot = new kahootModel({
     title,
@@ -45,11 +48,16 @@ export const quizUpload = async (req, res, next) => {
     },
     finalScores,
   });
-  await kahoot.save();
-  await courseModel.updateOne(
-    { courseId },
-    { $push: { 'activities.$[activities].sources': kahoot._id } },
-    { arrayFilters: [{ 'activities.name': 'kahoot' }] },
-  );
+
+  const checkIfQuizExists = await kahootModel.findOne({ quizId: kahoot.quizId }, { quizId: 1, _id: 0 }).lean();
+  if (checkIfQuizExists) return next(createBadRequest(`Quiz ${title} is already uploaded to this course`));
+
+  await kahoot.save().then(async ({ _id }) => {
+    await courseModel.updateOne(
+      { courseId },
+      { $push: { 'activities.$[activities].sources': _id } },
+      { arrayFilters: [{ 'activities.name': name }] },
+    );
+  });
   res.status(201).json({ message: 'Quiz uploaded successfully' });
 };

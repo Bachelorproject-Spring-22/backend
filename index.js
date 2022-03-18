@@ -36,7 +36,7 @@ async function bootstrap() {
   } else {
     app.use(cors());
   }
-  app.use(morgan('dev'));
+  app.use(morgan('dev')); //TODO: Change this before deploy
 
   const authUser = passport.authenticate('jwt', { session: false });
 
