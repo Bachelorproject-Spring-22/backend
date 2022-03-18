@@ -2,22 +2,7 @@ import excelToJson from 'convert-excel-to-json';
 import fs from 'fs';
 
 export const readDataFromExcel = (file) => {
-  const sourceFile = excelToJson({
-    source: fs.readFileSync(file),
-    range: 'B5',
-  });
-
-  const numberOfSheets = sourceFile['Overview'][0].B[0];
-
-  const returnAllSheets = (sheets) => {
-    let array = [];
-    for (let i = 0; i < sheets; i++) {
-      array.push(`${i + 1} Quiz`);
-    }
-    return array;
-  };
-
-  const allQuizSheets = excelToJson({
+  return excelToJson({
     source: fs.readFileSync(file),
     header: { rows: 3 },
     sheets: [
@@ -39,5 +24,4 @@ export const readDataFromExcel = (file) => {
       },
     ],
   });
-  return allQuizSheets;
 };
