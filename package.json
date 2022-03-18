@@ -5,15 +5,19 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Bachelorproject-Spring-22/backend.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "NTNU",
+    "bachelor",
+    "backend"
+  ],
+  "author": "Cornelius Sandmæl, Glenn Hansen, Tom Schrier",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/Bachelorproject-Spring-22/backend/issues"
