@@ -8,6 +8,7 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import helmet from 'helmet';
+import { connectToMongoDB } from './config/mongoose.js ';
 
 // Config
 import { connectToMongoDB } from './config/mongoose.js ';
