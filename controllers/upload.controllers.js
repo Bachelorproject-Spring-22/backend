@@ -33,7 +33,7 @@ export const quizUpload = async (req, res, next) => {
 
   const titleFromExcel = dataFromExcel['Overview'][0].A;
   var sanitized = titleFromExcel.replace(/[^\w\s]/gi, '');
-  const title = sanitized.replace(/\s\s+/g, '');
+  const title = sanitized.replace(/\s+/g, '_');
   const utc = dataFromExcel['Overview'][1].B;
 
   // https://stackoverflow.com/questions/38735927/add-offset-to-utc-date-in-javascript
