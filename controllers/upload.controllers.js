@@ -8,6 +8,9 @@ export const quizUpload = async (req, res, next) => {
   const filePath = req.file;
   const courseId = req.body.courseId;
 
+  if (!courseId) return next(createNotFound('Course id not found'));
+  if (!filePath) return next(createNotFound('filePath'));
+
   const name = 'kahoot';
   const variant = 'quiz';
 
