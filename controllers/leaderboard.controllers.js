@@ -57,7 +57,7 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
         _id: false,
         player: {
           $push: {
-            _id: '$_id.player',
+            name: '$_id.player',
             courseId: '$_id.courseId',
             totalScore: '$totalScore',
             quizzesAttended: '$quizzesAttended',
@@ -123,9 +123,9 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
         _id: false,
         player: {
           $push: {
-            _id: '$_id.player',
+            name: '$_id.player',
             code: '$_id.code',
-            name: '$_id.name',
+            courseName: '$_id.name',
             courseId: '$_id.courseId',
             totalScore: '$totalScore',
             quizzesAttended: '$quizzesAttended',
@@ -134,9 +134,10 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
       },
     },
     { $unwind: { path: '$player', includeArrayIndex: 'ranking' } },
-    { $match: { 'player._id': username } },
+    { $match: { 'player.name': username } },
     { $project: { rank: { $add: ['$ranking', 1] }, player: 1, totalScore: 1, quizzesAttended: 1, _id: 0 } },
   ]);
+
   const courseAndTotalAmountOfQuizzes = await studyProgrammeModel.aggregate([
     { $match: { studyProgrammeCode } },
     { $unwind: '$studyPeriods' },
@@ -156,13 +157,28 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
       $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
     },
     {
+      $lookup: {
+        from: 'kahoots',
+        localField: 'coursesInPeriod.activities.sources',
+        foreignField: '_id',
+        as: 'kahootsInPeriod',
+      },
+    },
+    { $unwind: '$kahootsInPeriod' },
+    {
+      $group: {
+        _id: { course: '$kahootsInPeriod.course' },
+        date: {
+          $push: {
+            _id: '$kahootsInPeriod',
+          },
+        },
+      },
+    },
+    {
       $project: {
-        totalAmountOfQuizzes: { $size: '$coursesInPeriod.activities.sources' },
-        code: '$coursesInPeriod.code',
-        name: '$coursesInPeriod.name',
-        year: '$year',
-        semester: '$studyPeriods.dates.term',
-        courseId: '$coursesInPeriod.courseId',
+        totalAmountOfQuizzes: { $size: ['$date'] },
+        course: '$_id.course',
         _id: 0,
       },
     },
@@ -171,7 +187,7 @@ export const semesterLeaderboardAndUserCourses = async (req, res) => {
     message: `StudyPlan: ${studyProgrammeCode}`,
     studyProgrammeData,
     getUserSpecific,
-    courseAndTotalAmountOfQuizzes,
+    courseAndTotalAmountOfQuizzes: courseAndTotalAmountOfQuizzes[0],
   });
 };
 
@@ -231,8 +247,7 @@ export const courseSpecificLeaderboard = async (req, res) => {
         _id: false,
         player: {
           $push: {
-            _id: '$_id.player',
-            courseId: '$_id.courseId',
+            name: '$_id.player',
             totalScore: '$totalScore',
             quizzesAttended: '$quizzesAttended',
           },
@@ -270,11 +285,28 @@ export const courseSpecificLeaderboard = async (req, res) => {
       $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
     },
     {
+      $lookup: {
+        from: 'kahoots',
+        localField: 'coursesInPeriod.activities.sources',
+        foreignField: '_id',
+        as: 'kahootsInPeriod',
+      },
+    },
+    { $unwind: '$kahootsInPeriod' },
+    {
+      $group: {
+        _id: { course: '$kahootsInPeriod.course' },
+        date: {
+          $push: {
+            _id: '$kahootsInPeriod',
+          },
+        },
+      },
+    },
+    {
       $project: {
-        totalAmountOfQuizzes: { $size: '$coursesInPeriod.activities.sources' },
-        code: '$coursesInPeriod.code',
-        name: '$coursesInPeriod.name',
-        courseId: '$coursesInPeriod.courseId',
+        totalAmountOfQuizzes: { $size: ['$date'] },
+        course: '$_id.course',
         _id: 0,
       },
     },
@@ -283,13 +315,13 @@ export const courseSpecificLeaderboard = async (req, res) => {
   // Add anonymous usernames except top 5 or current user
 
   const studyProgrammeData = getUserData.map(({ player, rank }) =>
-    rank <= 5 || player._id === username ? { player, rank } : { player: { ...player, _id: 'Anonymous' }, rank },
+    rank <= 5 || player._id === username ? { player, rank } : { player: { ...player, _id: 'anonymous' }, rank },
   );
 
   res.status(201).json({
     message: `StudyPlan: ${studyProgrammeCode}`,
     studyProgrammeData,
-    courseAndTotalAmountOfQuizzes,
+    courseAndTotalAmountOfQuizzes: courseAndTotalAmountOfQuizzes[0],
   });
 };
 
@@ -352,13 +384,12 @@ export const selectQuizSnapshot = async (req, res, next) => {
       },
     },
     { $sort: { totalScore: -1 } },
-
     {
       $group: {
         _id: false,
         player: {
           $push: {
-            _id: '$_id.player',
+            name: '$_id.player',
             courseId: '$_id.courseId',
             totalScore: '$totalScore',
             quizzesAttended: '$quizzesAttended',
@@ -399,11 +430,36 @@ export const selectQuizSnapshot = async (req, res, next) => {
       $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
     },
     {
+      $lookup: {
+        from: 'kahoots',
+        localField: 'coursesInPeriod.activities.sources',
+        foreignField: '_id',
+        as: 'kahootsInPeriod',
+      },
+    },
+    { $unwind: '$kahootsInPeriod' },
+    {
+      $match: {
+        'kahootsInPeriod.playedOn': {
+          $gte: new Date(startDate),
+          $lte: new Date(endDate),
+        },
+      },
+    },
+    {
+      $group: {
+        _id: { course: '$kahootsInPeriod.course' },
+        date: {
+          $push: {
+            _id: '$kahootsInPeriod',
+          },
+        },
+      },
+    },
+    {
       $project: {
-        totalAmountOfQuizzes: { $size: '$coursesInPeriod.activities.sources' },
-        code: '$coursesInPeriod.code',
-        name: '$coursesInPeriod.name',
-        courseId: '$coursesInPeriod.courseId',
+        totalAmountOfQuizzes: { $size: ['$date'] },
+        course: '$_id.course',
         _id: 0,
       },
     },
@@ -411,6 +467,6 @@ export const selectQuizSnapshot = async (req, res, next) => {
   res.status(201).json({
     message: `StudyPlan: ${studyProgrammeCode} | courseId: ${courseId} | periodNumber: ${periodNumber}`,
     studyProgrammeData,
-    courseAndTotalAmountOfQuizzes,
+    courseAndTotalAmountOfQuizzes: courseAndTotalAmountOfQuizzes[0],
   });
 };
