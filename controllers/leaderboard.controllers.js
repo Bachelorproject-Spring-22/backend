@@ -7,6 +7,7 @@ export const semesterLeaderboardAndUserCourses = async (req, res, next) => {
   const { username } = req.user;
   const headers = req.headers.authorization;
   if (!headers) return next(createUnauthorized());
+  if (!username) return next(createNotFound('Username not found'));
 
   const token = headers.split(' ')[1];
   const { periodNumber, studyProgrammeCode } = jwtDecode(token);
@@ -196,7 +197,6 @@ export const courseSpecificLeaderboard = async (req, res, next) => {
   const { username } = req.user;
   const { courseId } = req.params;
   if (!headers) return next(createUnauthorized());
-
   if (!username) return next(createNotFound('Username not found '));
   if (!courseId) return next(createBadRequest('Please enter a valid course id'));
 
