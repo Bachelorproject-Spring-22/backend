@@ -7,6 +7,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
+import helmet from 'helmet';
 import { connectToMongoDB } from './config/mongoose.js ';
 
 import authRoute from './routes/auth.routes.js';
@@ -24,6 +25,7 @@ import hasRole from './middleware/role.middleware.js';
 async function bootstrap() {
   // Init express
   const app = express();
+  app.use(helmet());
 
   // Middlewares
   // parse request of content-type - application/json

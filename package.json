@@ -1,6 +1,9 @@
 {
   "name": "backend",
   "version": "1.0.0",
+  "engines": {
+    "node": "v17.7.1"
+  },
   "description": "Backend code for Bachelorproject - The Kahoot! League",
   "main": "index.js",
   "type": "module",
@@ -31,21 +34,22 @@
     "xlsx": "^0.18.2"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.2",
     "compression": "^1.7.4",
+    "convert-excel-to-json": "^1.7.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.0.0",
     "express": "^4.17.3",
-    "mongoose": "^6.2.3",
-    "morgan": "^1.10.0",
-    "bcryptjs": "^2.4.3",
-    "body-parser": "^1.19.2",
-    "convert-excel-to-json": "^1.7.0",
     "express-jwt": "^6.1.1",
     "express-jwt-middleware": "^1.0.3",
+    "helmet": "^5.0.2",
     "joi": "^17.6.0",
     "jsonwebtoken": "^8.5.1",
     "jwt-decode": "^3.1.2",
+    "mongoose": "^6.2.3",
+    "morgan": "^1.10.0",
     "multer": "^1.4.4",
     "passport": "^0.5.2",
     "passport-jwt": "^4.0.0",
