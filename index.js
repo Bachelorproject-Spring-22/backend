@@ -33,6 +33,7 @@ async function bootstrap() {
   // parse request of content-type - application/x-www-form-urlencoded
   app.use(express.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }));
   app.use(cookieParser());
+  // Compress the response from backend to frontend | save bandwidth
   app.use(compression());
 
   if (process.env && process.env.NODE_ENV && process.env.NODE_ENV === 'production') {
