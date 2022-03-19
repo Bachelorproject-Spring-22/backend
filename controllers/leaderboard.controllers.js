@@ -194,7 +194,7 @@ export const semesterLeaderboardAndUserCourses = async (req, res, next) => {
 
 export const courseSpecificLeaderboard = async (req, res, next) => {
   const headers = req.headers.authorization;
-  const { username } = req.user;
+  const { username, role } = req.user;
   const { courseId } = req.params;
   if (!headers) return next(createUnauthorized());
   if (!username) return next(createNotFound('Username not found '));
@@ -318,9 +318,10 @@ export const courseSpecificLeaderboard = async (req, res, next) => {
   // Add anonymous usernames except top 5 or current user
 
   const studyProgrammeData = getUserData.map(({ player, rank }) =>
-    rank <= 5 || player.name === username ? { player, rank } : { player: { ...player, name: 'anonymous' }, rank },
+    rank <= 5 || player.name === username || role !== 'student'
+      ? { player, rank }
+      : { player: { ...player, name: 'anonymous' }, rank },
   );
-
   res.status(201).json({
     message: `StudyPlan: ${studyProgrammeCode}`,
     studyProgrammeData,
@@ -330,10 +331,11 @@ export const courseSpecificLeaderboard = async (req, res, next) => {
 
 export const selectQuizSnapshot = async (req, res, next) => {
   const headers = req.headers.authorization;
+  const { username, role } = req.user;
   const { courseId } = req.params;
   const { startDate, endDate } = req.body;
   if (!headers) return next(createUnauthorized());
-
+  if (!username) return next(createNotFound('Username not found '));
   if (!courseId) return next(createNotFound('Course id not found'));
   if (!startDate || !endDate) return next(createBadRequest('Please enter a valid timeframe'));
 
@@ -342,7 +344,7 @@ export const selectQuizSnapshot = async (req, res, next) => {
   const name = 'kahoot';
   const variant = 'quiz';
 
-  const studyProgrammeData = await studyProgrammeModel.aggregate([
+  const getUserData = await studyProgrammeModel.aggregate([
     { $match: { studyProgrammeCode } },
     { $unwind: '$studyPeriods' },
     { $match: { 'studyPeriods.periodNumber': periodNumber } },
@@ -470,6 +472,13 @@ export const selectQuizSnapshot = async (req, res, next) => {
       },
     },
   ]);
+  // Add anonymous usernames except top 5 or current user
+
+  const studyProgrammeData = getUserData.map(({ player, rank }) =>
+    rank <= 5 || player.name === username || role !== 'student'
+      ? { player, rank }
+      : { player: { ...player, name: 'anonymous' }, rank },
+  );
   res.status(201).json({
     message: `StudyPlan: ${studyProgrammeCode} | courseId: ${courseId} | periodNumber: ${periodNumber}`,
     studyProgrammeData,

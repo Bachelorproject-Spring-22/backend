@@ -101,7 +101,6 @@ function setTokenCookie(res, token) {
     httpOnly: true,
     expires: new Date(Date.now() + process.env.REFRESH_TOKEN_EXP_SEVEN_DAYS),
     secure: false,
-    // };
   };
   res.cookie('refreshToken', token, cookieOptions);
 }
@@ -130,7 +129,6 @@ async function getRefreshToken(token) {
 }
 
 function generateJwtToken(user) {
-  const exp = process.env.JWT_TOKEN_EXP_IN_MINUTES;
   const studyPeriod = calculateSemester(user.year);
   return jwt.sign(
     {
