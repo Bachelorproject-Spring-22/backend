@@ -2,7 +2,7 @@
   "name": "backend",
   "version": "1.0.0",
   "engines": {
-    "node": "v17.7.1"
+    "node": "v17.7.2"
   },
   "description": "Backend code for Bachelorproject - The Kahoot! League",
   "main": "index.js",
