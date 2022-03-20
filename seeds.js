@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 import userModel from './models/user.js';
 import studyProgrammeModel from './models/studyProgramme.js';
 import courseModel from './models/course.js';
@@ -15,16 +16,41 @@ mongoose
   .then(() => console.log('Connected to DB!'))
   .catch((error) => console.log(error));
 
+let passwordOne = 'testingUser!';
+let passwordTwo = 'testingUser!';
+let passwordThree = 'testingUser!';
+let passwordHashOne = bcrypt.hashSync(passwordOne, 10);
+let passwordHashTwo = bcrypt.hashSync(passwordTwo, 10);
+let passwordHashThree = bcrypt.hashSync(passwordThree, 10);
+
 const seedUsers = [
-  { username: 'seedSuperAdmin', password: 'testingUser!', role: 'superAdmin' },
-  { username: 'seedTeacher', password: 'testingUser!', role: 'teacher', programmeCode: 'SEED', year: 2022 },
-  { username: 'seedStudent', password: 'testingUser!', role: 'student', programmeCode: 'SEED', year: 2022 },
+  new userModel({
+    username: 'seedSuperAdmin',
+    password: passwordHashOne,
+    role: 'superAdmin',
+    programmeCode: 'SEED21',
+    year: 2021,
+  }),
+  new userModel({
+    username: 'seedTeacher',
+    password: passwordHashTwo,
+    role: 'teacher',
+    programmeCode: 'SEED21',
+    year: 2021,
+  }),
+  new userModel({
+    username: 'seedStudent',
+    password: passwordHashThree,
+    role: 'student',
+    programmeCode: 'SEED21',
+    year: 2021,
+  }),
 ];
 
 const seedStudyProgramme = [
-  {
+  new studyProgrammeModel({
     programmeCode: 'SEED',
-    year: 2022,
+    year: 2021,
     name: 'Seeding programme',
     startTerm: 'fall',
     studyPeriods: [
@@ -102,79 +128,67 @@ const seedStudyProgramme = [
       },
     ],
     users: [],
-    studyProgrammeCode: 'BWU19',
-  },
-];
-
-const seedCourse = [
-  {
-    code: 'IDG9999',
-    courseId: 'IDG9999_f2022',
-    name: 'Seeding course',
-    credits: 7.5,
-    year: 2022,
-    semester: 'fall',
-    activities: [
-      { variant: 'quiz', name: 'kahoot' },
-      { variant: 'cover', name: 'keynote' },
-    ],
-  },
+    studyProgrammeCode: 'SEED21',
+  }),
 ];
 
 const seedKahoot = [
-  {
+  new kahootModel({
     title: 'idg9999_seeding_kahoot_1',
-    playedOn: Date('2022-03-18T00:00:00.000+00:00'),
+    playedOn: new Date('2022-03-18T00:00:00.000+00:00'),
     hostedBy: 'seeding',
     numberOfPlayers: '3 players',
     course: {
       code: 'IDG9999',
       name: 'Seeding course',
-      courseId: 'IDG9999_f2022',
+      courseId: 'IDG9999_f2021',
     },
     finalScores: [
       { rank: 1, player: 'seedSuperAdmin', totalScore: 5000, correctAnswers: 5, incorrectAnswers: 0 },
       { rank: 2, player: 'seedTeacher', totalScore: 4000, correctAnswers: 4, incorrectAnswers: 1 },
       { rank: 3, player: 'seedStudent', totalScore: 3000, correctAnswers: 3, incorrectAnswers: 2 },
     ],
-  },
+  }),
+];
+const seedCourse = [
+  new courseModel({
+    code: 'IDG9999',
+    courseId: 'IDG9999_f2021',
+    name: 'Seeding course',
+    credits: 7.5,
+    year: 2022,
+    semester: 'fall',
+    activities: [
+      { variant: 'quiz', name: 'kahoot', sources: [] },
+      { variant: 'cover', name: 'keynote' },
+    ],
+  }),
 ];
 
 const test = async () => {
-  /*   await userModel.deleteMany({});
-  await studyProgrammeModel.deleteMany({});
-  await courseModel.deleteMany({});
-  await courseModel.deleteMany({}); */
-
   await Promise.all([
-    /*     userModel.deleteMany({}),
+    userModel.deleteMany({}),
     studyProgrammeModel.deleteMany({}),
     courseModel.deleteMany({}),
-    courseModel.deleteMany({}), */
-    userModel.insertMany(seedUsers),
-    studyProgrammeModel
-      .insertMany(seedStudyProgramme)
-      .then(
-        userModel
-          .find({ username: seedUsers.username })
-          .then(({ _id }) =>
-            studyProgrammeModel.updateMany({ studyProgrammeCode: 'IDG9999_f2022' }, { $push: { _id } }),
-          ),
-      ),
+    kahootModel.deleteMany({}),
 
-    courseModel.insertMany(seedCourse).then(
-      courseModel.findOne({ courseId: 'IDG9999_f2022' }).then(({ _id }) =>
-        studyProgrammeModel.updateOne(
-          { studyProgrammeCode: 'IDG9999_f2022' },
-          {
-            $push: { 'studyPeriods.$[studyPeriods].courses': { _id } },
-            arrayFilters: [{ 'studyPeriods.periodNumber': 6 }],
-          },
-        ),
-      ),
-    ),
+    userModel.insertMany(seedUsers),
+    studyProgrammeModel.insertMany(seedStudyProgramme),
+    courseModel.insertMany(seedCourse),
     kahootModel.insertMany(seedKahoot),
-  ]);
+  ]).then(async () => {
+    await studyProgrammeModel.updateOne(
+      { studyProgrammeCode: 'SEED21' },
+      { $push: { 'studyPeriods.$[studyPeriods].courses': { _id: seedCourse[0]._id } }, users: seedUsers },
+      { arrayFilters: [{ 'studyPeriods.periodNumber': 2 }] },
+    );
+    await courseModel.updateOne(
+      { courseId: 'IDG9999_f2021' },
+      { $push: { 'activities.$[activities].sources': { _id: seedKahoot[0]._id } } },
+      { arrayFilters: [{ 'activities.name': 'kahoot' }] },
+    );
+  });
+
   console.log('Disconnected from DB!');
   mongoose.connection.close();
 };
