@@ -213,9 +213,10 @@ export const updateStudyPeriodWithCourse = async (req, res, next) => {
   // Check if course is already added to the courseGroup | x
   // Update courseGroup with the new course | x
   const courseId = req.params.courseId;
-  const { studyProgrammeCode, periodNumber } = req.body;
+  const studyProgrammeCode = req.params.studyProgrammeCode;
+  const { periodNumber } = req.body;
   if (!studyProgrammeCode || !periodNumber)
-    return createBadRequest('StudyProgrammeCode and studyPeriod must be specified');
+    return next(createBadRequest('StudyProgrammeCode and studyPeriod must be specified'));
 
   if (!courseId) return next(createNotFound('Course id not found'));
   const course = await courseModel.findOne({ courseId }).lean();
