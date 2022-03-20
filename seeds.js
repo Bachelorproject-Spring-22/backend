@@ -188,7 +188,7 @@ const test = async () => {
       { arrayFilters: [{ 'activities.name': 'kahoot' }] },
     );
   });
-
+  console.log('Seeding the DB with predefined data');
   console.log('Disconnected from DB!');
   mongoose.connection.close();
 };
