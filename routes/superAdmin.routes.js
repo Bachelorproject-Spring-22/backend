@@ -22,6 +22,6 @@ router.post('/programme', asyncMiddleware(createStudyProgramme));
 
 router.patch('/programme/:studyProgrammeCode', asyncMiddleware(updateStudyProgrammeWithUsers));
 
-router.patch('/programme/:courseId', asyncMiddleware(updateStudyPeriodWithCourse));
+router.patch('/programme/:studyProgrammeCode/:courseId', asyncMiddleware(updateStudyPeriodWithCourse));
 
 export default router;
