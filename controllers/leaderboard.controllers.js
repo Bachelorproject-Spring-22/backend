@@ -613,7 +613,7 @@ export const selectQuizSnapshot = async (req, res, next) => {
   const variant = 'quiz';
 
   const getUserData = await studyProgrammeModel.aggregate([
-    { $match: { studyProgrammeCode } },
+    { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
     { $unwind: '$studyPeriods' },
     { $match: { 'studyPeriods.periodNumber': periodNumber } },
     { $unwind: '$studyPeriods.courses' },
