@@ -179,9 +179,11 @@ export const updateStudyProgrammeWithUsers = async (req, res, next) => {
   });
 
   if (checkIfUserIsAddedToProgramme.length !== 0)
-    return createBadRequest(`Remove following user(s) from input [${checkIfUserIsAddedToProgramme}]`, {
-      users: checkIfUserIsAddedToProgramme,
-    });
+    return next(
+      createBadRequest(`Remove following user(s) from input [${checkIfUserIsAddedToProgramme}]`, {
+        users: checkIfUserIsAddedToProgramme,
+      }),
+    );
 
   let users = [];
 
