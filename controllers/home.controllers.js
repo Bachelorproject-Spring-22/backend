@@ -1,6 +1,7 @@
 import studyProgrammeModel from '../models/studyProgramme.js';
 import jwtDecode from 'jwt-decode';
-
+import mongoose from 'mongoose';
+const ObjectId = mongoose.Types.ObjectId;
 import { createBadRequest, createNotFound, createUnauthorized } from '../utils/errors.js';
 
 export const userSpecificCourseAndRank = async (req, res, next) => {
@@ -10,7 +11,7 @@ export const userSpecificCourseAndRank = async (req, res, next) => {
   if (!username) return next(createNotFound('username not found'));
 
   const token = headers.split(' ')[1];
-  const { periodNumber, studyProgrammeCode } = jwtDecode(token);
+  const { periodNumber, studyProgrammeCode, _id } = jwtDecode(token);
   const name = 'kahoot';
   const variant = 'quiz';
   if (!variant || !name) return next(createBadRequest('Variant and name is required'));
@@ -19,7 +20,7 @@ export const userSpecificCourseAndRank = async (req, res, next) => {
   if (!studyProgramme) return next(createNotFound('StudyProgramme does not exist'));
 
   const studyProgrammeData = await studyProgrammeModel.aggregate([
-    { $match: { studyProgrammeCode } },
+    { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
     { $unwind: '$studyPeriods' },
     { $match: { 'studyPeriods.periodNumber': periodNumber } },
     { $unwind: '$studyPeriods.courses' },
@@ -94,12 +95,12 @@ export const getUserSpecificCourseResultsLeaderBoard = async (req, res, next) =>
   if (!username) return next(createNotFound('Username not found'));
 
   const token = headers.split(' ')[1];
-  const { periodNumber, studyProgrammeCode } = jwtDecode(token);
+  const { periodNumber, studyProgrammeCode, _id } = jwtDecode(token);
   const name = 'kahoot';
   const variant = 'quiz';
 
   const studyProgrammeData = await studyProgrammeModel.aggregate([
-    { $match: { studyProgrammeCode } },
+    { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
     { $unwind: '$studyPeriods' },
     { $match: { 'studyPeriods.periodNumber': periodNumber } },
     { $unwind: '$studyPeriods.courses' },
@@ -161,7 +162,7 @@ export const getUserSpecificCourseResultsLeaderBoard = async (req, res, next) =>
   ]);
 
   const getUserSpecific = await studyProgrammeModel.aggregate([
-    { $match: { studyProgrammeCode } },
+    { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
     { $unwind: '$studyPeriods' },
     { $match: { 'studyPeriods.periodNumber': periodNumber } },
     { $unwind: '$studyPeriods.courses' },
@@ -220,12 +221,12 @@ export const getUserSpecificCourseResultsLeaderBoardQuiz = async (req, res, next
   if (!username) return next(createNotFound('Username not found'));
 
   const token = headers.split(' ')[1];
-  const { periodNumber, studyProgrammeCode } = jwtDecode(token);
+  const { periodNumber, studyProgrammeCode, _id } = jwtDecode(token);
   const name = 'kahoot';
   const variant = 'quiz';
 
   const getUserSpecific = await studyProgrammeModel.aggregate([
-    { $match: { studyProgrammeCode } },
+    { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
     { $unwind: '$studyPeriods' },
     { $match: { 'studyPeriods.periodNumber': periodNumber } },
     { $unwind: '$studyPeriods.courses' },
