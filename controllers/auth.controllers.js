@@ -11,6 +11,7 @@ import dotenv from 'dotenv';
 
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import studyProgrammeModel from '../models/studyProgramme.js';
 
 dotenv.config();
 // Local files
@@ -32,7 +33,7 @@ export const login = async (req, res, next) => {
     return next(createBadRequest('Wrong email and/or password. Please try again.'));
   }
 
-  const jwtToken = generateJwtToken(user);
+  const jwtToken = await generateJwtToken(user);
   const refreshToken = generateRefreshToken(user, ipAddress);
   await refreshToken.save();
   setTokenCookie(res, refreshToken.token);
@@ -51,7 +52,7 @@ export const refreshToken = async (req, res, next) => {
   // revokes old refresh token (if any)
   // saves new and old refresh token
   // Generates and returns new JWT token (valid for 15 minutes)
-  const refreshToken = await getRefreshToken(token);
+  const refreshToken = getRefreshToken(token);
   // destructure user out of refreshToken
   const { user } = refreshToken;
   if (!user) return next(createUnauthorized());
