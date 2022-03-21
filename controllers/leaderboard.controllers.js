@@ -2,7 +2,7 @@ import studyProgrammeModel from '../models/studyProgramme.js';
 import jwtDecode from 'jwt-decode';
 import mongoose from 'mongoose';
 
-let ObjectId = mongoose.Types.ObjectId;
+const ObjectId = mongoose.Types.ObjectId;
 
 import { createUnauthorized, createBadRequest, createNotFound } from '../utils/errors.js';
 
@@ -204,7 +204,7 @@ export const courseSpecificLeaderboard = async (req, res, next) => {
   if (!courseId) return next(createBadRequest('Please enter a valid course id'));
 
   const token = headers.split(' ')[1];
-  const { periodNumber, studyProgrammeCode } = jwtDecode(token);
+  const { periodNumber, studyProgrammeCode, _id } = jwtDecode(token);
   const name = 'kahoot';
   const variant = 'quiz';
 
@@ -343,7 +343,7 @@ export const selectQuizSnapshot = async (req, res, next) => {
   if (!startDate || !endDate) return next(createBadRequest('Please enter a valid timeframe'));
 
   const token = headers.split(' ')[1];
-  const { periodNumber, studyProgrammeCode } = jwtDecode(token);
+  const { periodNumber, studyProgrammeCode, _id } = jwtDecode(token);
   const name = 'kahoot';
   const variant = 'quiz';
 
