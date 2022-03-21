@@ -629,7 +629,14 @@ export const selectQuizSnapshot = async (req, res, next) => {
     { $match: { 'coursesInPeriod.courseId': courseId } },
     { $unwind: '$coursesInPeriod.activities' },
     {
-      $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
+      $match: {
+        $and: [
+          {
+            'coursesInPeriod.activities.name': name,
+            'coursesInPeriod.activities.variant': variant,
+          },
+        ],
+      },
     },
     {
       $lookup: {
@@ -655,7 +662,9 @@ export const selectQuizSnapshot = async (req, res, next) => {
           player: '$kahootsInPeriod.finalScores.player',
           courseId: '$coursesInPeriod.courseId',
         },
-        totalScore: { $sum: '$kahootsInPeriod.finalScores.totalScore' },
+        totalScore: {
+          $sum: '$kahootsInPeriod.finalScores.totalScore',
+        },
         quizzesAttended: { $count: {} },
       },
     },
