@@ -17,7 +17,7 @@ export const semesterLeaderboardAndUserCourses = async (req, res, next) => {
   if (!username) return next(createNotFound('Username not found'));
 
   const token = headers.split(' ')[1];
-  const { periodNumber, studyProgrammeCode, _id } = jwtDecode(token);
+  const { periodNumber, studyProgrammeCode, _id, role } = jwtDecode(token);
   const name = 'kahoot';
   const variant = 'quiz';
 
