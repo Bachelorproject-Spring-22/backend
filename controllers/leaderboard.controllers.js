@@ -1,5 +1,8 @@
 import studyProgrammeModel from '../models/studyProgramme.js';
 import jwtDecode from 'jwt-decode';
+import mongoose from 'mongoose';
+
+let ObjectId = mongoose.Types.ObjectId;
 
 import { createUnauthorized, createBadRequest, createNotFound } from '../utils/errors.js';
 
@@ -10,12 +13,12 @@ export const semesterLeaderboardAndUserCourses = async (req, res, next) => {
   if (!username) return next(createNotFound('Username not found'));
 
   const token = headers.split(' ')[1];
-  const { periodNumber, studyProgrammeCode } = jwtDecode(token);
+  const { periodNumber, studyProgrammeCode, _id } = jwtDecode(token);
   const name = 'kahoot';
   const variant = 'quiz';
 
   const studyProgrammeData = await studyProgrammeModel.aggregate([
-    { $match: { studyProgrammeCode } },
+    { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
     { $unwind: '$studyPeriods' },
     { $match: { 'studyPeriods.periodNumber': periodNumber } },
     { $unwind: '$studyPeriods.courses' },
@@ -79,7 +82,7 @@ export const semesterLeaderboardAndUserCourses = async (req, res, next) => {
   ]);
 
   const getUserSpecific = await studyProgrammeModel.aggregate([
-    { $match: { studyProgrammeCode } },
+    { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
     { $unwind: '$studyPeriods' },
     { $match: { 'studyPeriods.periodNumber': periodNumber } },
     { $unwind: '$studyPeriods.courses' },
@@ -140,7 +143,7 @@ export const semesterLeaderboardAndUserCourses = async (req, res, next) => {
   ]);
 
   const courseAndTotalAmountOfQuizzes = await studyProgrammeModel.aggregate([
-    { $match: { studyProgrammeCode } },
+    { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
     { $unwind: '$studyPeriods' },
     { $match: { 'studyPeriods.periodNumber': periodNumber } },
     { $unwind: '$studyPeriods.courses' },
@@ -206,7 +209,7 @@ export const courseSpecificLeaderboard = async (req, res, next) => {
   const variant = 'quiz';
 
   const getUserData = await studyProgrammeModel.aggregate([
-    { $match: { studyProgrammeCode } },
+    { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
     { $unwind: '$studyPeriods' },
     { $match: { 'studyPeriods.periodNumber': periodNumber } },
     { $unwind: '$studyPeriods.courses' },
@@ -269,7 +272,7 @@ export const courseSpecificLeaderboard = async (req, res, next) => {
     },
   ]);
   const courseAndTotalAmountOfQuizzes = await studyProgrammeModel.aggregate([
-    { $match: { studyProgrammeCode } },
+    { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
     { $unwind: '$studyPeriods' },
     { $match: { 'studyPeriods.periodNumber': periodNumber } },
     { $unwind: '$studyPeriods.courses' },
@@ -345,7 +348,7 @@ export const selectQuizSnapshot = async (req, res, next) => {
   const variant = 'quiz';
 
   const getUserData = await studyProgrammeModel.aggregate([
-    { $match: { studyProgrammeCode } },
+    { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
     { $unwind: '$studyPeriods' },
     { $match: { 'studyPeriods.periodNumber': periodNumber } },
     { $unwind: '$studyPeriods.courses' },
@@ -419,7 +422,7 @@ export const selectQuizSnapshot = async (req, res, next) => {
   ]);
 
   const courseAndTotalAmountOfQuizzes = await studyProgrammeModel.aggregate([
-    { $match: { studyProgrammeCode } },
+    { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
     { $unwind: '$studyPeriods' },
     { $match: { 'studyPeriods.periodNumber': periodNumber } },
     { $unwind: '$studyPeriods.courses' },
