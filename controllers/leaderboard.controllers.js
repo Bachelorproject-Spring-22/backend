@@ -745,8 +745,8 @@ export const selectQuizSnapshot = async (req, res, next) => {
       },
     },
   ]);
-  // Add anonymous usernames except top 5 or current user
 
+  // Add anonymous usernames except top 5 or current user
   const studyProgrammeData = getUserData.map(({ player, rank }) =>
     rank <= 5 || player.name === username || role !== 'student'
       ? { player, rank }

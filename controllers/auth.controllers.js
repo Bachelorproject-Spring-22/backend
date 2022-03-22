@@ -117,7 +117,7 @@ function setTokenCookie(res, token) {
 
 async function getRefreshToken(token) {
   const refreshToken = await refreshTokenModel.findOne({ token }).populate('user');
-  if (!refreshToken || !refreshToken.isActive) throw 'Invalid token';
+  if (!refreshToken || !refreshToken.isActive) return;
   return refreshToken;
 }
 
