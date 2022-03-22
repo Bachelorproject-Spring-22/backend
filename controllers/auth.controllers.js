@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import studyProgrammeModel from '../models/studyProgramme.js';
 
 import { createBadRequest, createNotFound } from '../utils/errors.js';
 
@@ -23,10 +24,9 @@ export const login = async (req, res, next) => {
     return next(createBadRequest('Wrong email and/or password. Please try again.'));
   }
 
-  const jwtToken = generateJwtToken(user);
+  const jwtToken = await generateJwtToken(user);
   const refreshToken = generateRefreshToken(user, ipAddress);
   await refreshToken.save();
-
   setTokenCookie(res, refreshToken.token);
 
   res.status(200).json({
@@ -55,7 +55,7 @@ export const refreshToken = async (req, res, next) => {
   await refreshToken.save();
   await newRefreshToken.save();
 
-  const jwtToken = generateJwtToken(user);
+  const jwtToken = await generateJwtToken(user);
 
   setTokenCookie(res, newRefreshToken.token);
   res.status(200).json({
@@ -105,12 +105,19 @@ function setTokenCookie(res, token) {
   res.cookie('refreshToken', token, cookieOptions);
 }
 
-function calculateSemester(startYear) {
+async function calculateSemester(startYear, role, studyProgrammeCode) {
+  let currentYear;
+  const checkIfAdmin = role === 'student' ? startYear : studyProgrammeCode;
   const getCurrentDate = Date.now();
   const date = new Date(getCurrentDate);
   const onlyYear = date.getFullYear();
   const onlyMonth = date.getMonth() + 1;
-  const currentYear = onlyYear - startYear;
+  if (checkIfAdmin !== startYear) {
+    const studyYear = await studyProgrammeModel.findOne({ studyProgrammeCode }, { year: 1 });
+    currentYear = onlyYear - studyYear.year;
+  } else {
+    currentYear = onlyYear - startYear;
+  }
   let term, studyPeriod;
   onlyMonth < 7 ? (term = 'spring') : (term = 'fall');
   term == 'fall' ? currentYear++ : currentYear;
@@ -128,8 +135,8 @@ async function getRefreshToken(token) {
   return refreshToken;
 }
 
-function generateJwtToken(user) {
-  const studyPeriod = calculateSemester(user.year);
+async function generateJwtToken(user) {
+  const studyPeriod = await calculateSemester(user.year, user.role, user.programmeCode);
   return jwt.sign(
     {
       _id: user.id,
