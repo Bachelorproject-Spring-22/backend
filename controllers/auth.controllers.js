@@ -52,7 +52,7 @@ export const refreshToken = async (req, res, next) => {
   // revokes old refresh token (if any)
   // saves new and old refresh token
   // Generates and returns new JWT token (valid for 15 minutes)
-  const refreshToken = getRefreshToken(token);
+  const refreshToken = await getRefreshToken(token);
   // destructure user out of refreshToken
   const { user } = refreshToken;
   if (!user) return next(createUnauthorized());
@@ -64,7 +64,7 @@ export const refreshToken = async (req, res, next) => {
   await refreshToken.save();
   await newRefreshToken.save();
 
-  const jwtToken = generateJwtToken(user);
+  const jwtToken = await generateJwtToken(user);
 
   setTokenCookie(res, newRefreshToken.token);
   res.status(200).json({
