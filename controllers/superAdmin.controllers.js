@@ -73,8 +73,10 @@ const createStudyPeriod = (semesterNumbers, programmeCode, year, name, startTerm
 export const createUser = async (req, res, next) => {
   const { username, role, email, password, programmeCode, year } = req.body;
   //validate fields
-  if (!username || !role || !password || !programmeCode || !year)
-    return next(createBadRequest('Username, role or programmeCode or year password are required'));
+  if (!username || !role || !password) return next(createBadRequest('Username, role and password are required'));
+
+  if (role === 'student' && !programmeCode && !year)
+    return next(createBadRequest('Username, role, programmeCode, year and password are required'));
 
   const userExists = await userModel.exists({ username });
   if (userExists) return next(createBadRequest('User already exists'));
