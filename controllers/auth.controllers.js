@@ -105,20 +105,19 @@ function setTokenCookie(res, token) {
   res.cookie('refreshToken', token, cookieOptions);
 }
 
-function calculateSemester(startYear, role, studyProgrammeCode) {
+function calculateSemester(startYear) {
   let currentYear;
-  const checkIfAdmin = role === 'student' ? startYear : studyProgrammeCode;
   const getCurrentDate = Date.now();
   const date = new Date(getCurrentDate);
   const onlyYear = date.getFullYear();
   const onlyMonth = date.getMonth() + 1;
-  if (checkIfAdmin !== startYear) return;
   currentYear = onlyYear - startYear;
 
   let term, studyPeriod;
   onlyMonth < 7 ? (term = 'spring') : (term = 'fall');
   term == 'fall' ? currentYear++ : currentYear;
 
+  if (currentYear == 3) return term == 'fall' ? (studyPeriod = 5) : (studyPeriod = 6);
   if (currentYear == 1) return term == 'fall' ? (studyPeriod = 1) : (studyPeriod = 2);
   if (currentYear == 2) return term == 'fall' ? (studyPeriod = 3) : (studyPeriod = 4);
   if (currentYear == 3) return term == 'fall' ? (studyPeriod = 5) : (studyPeriod = 6);
@@ -139,7 +138,7 @@ function generateJwtToken(user) {
       _id: user.id,
       role: user.role,
       username: user.username,
-      studyProgrammeCode: [user.programmeCode],
+      studyProgrammeCode: user.programmeCode,
       periodNumber: studyPeriod,
     },
     process.env.TOKEN_SECRET,
