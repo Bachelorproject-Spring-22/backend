@@ -24,7 +24,7 @@ export const login = async (req, res, next) => {
     return next(createBadRequest('Wrong email and/or password. Please try again.'));
   }
 
-  const jwtToken = await generateJwtToken(user);
+  const jwtToken = generateJwtToken(user);
   const refreshToken = generateRefreshToken(user, ipAddress);
   await refreshToken.save();
   setTokenCookie(res, refreshToken.token);
@@ -55,7 +55,7 @@ export const refreshToken = async (req, res, next) => {
   await refreshToken.save();
   await newRefreshToken.save();
 
-  const jwtToken = await generateJwtToken(user);
+  const jwtToken = generateJwtToken(user);
 
   setTokenCookie(res, newRefreshToken.token);
   res.status(200).json({
@@ -105,19 +105,16 @@ function setTokenCookie(res, token) {
   res.cookie('refreshToken', token, cookieOptions);
 }
 
-async function calculateSemester(startYear, role, studyProgrammeCode) {
+function calculateSemester(startYear, role, studyProgrammeCode) {
   let currentYear;
   const checkIfAdmin = role === 'student' ? startYear : studyProgrammeCode;
   const getCurrentDate = Date.now();
   const date = new Date(getCurrentDate);
   const onlyYear = date.getFullYear();
   const onlyMonth = date.getMonth() + 1;
-  if (checkIfAdmin !== startYear) {
-    const studyYear = await studyProgrammeModel.findOne({ studyProgrammeCode }, { year: 1 });
-    currentYear = onlyYear - studyYear.year;
-  } else {
-    currentYear = onlyYear - startYear;
-  }
+  if (checkIfAdmin !== startYear) return;
+  currentYear = onlyYear - startYear;
+
   let term, studyPeriod;
   onlyMonth < 7 ? (term = 'spring') : (term = 'fall');
   term == 'fall' ? currentYear++ : currentYear;
@@ -135,14 +132,14 @@ async function getRefreshToken(token) {
   return refreshToken;
 }
 
-async function generateJwtToken(user) {
-  const studyPeriod = await calculateSemester(user.year, user.role, user.programmeCode);
+function generateJwtToken(user) {
+  const studyPeriod = calculateSemester(user.year, user.role, user.programmeCode);
   return jwt.sign(
     {
       _id: user.id,
       role: user.role,
       username: user.username,
-      studyProgrammeCode: user.programmeCode,
+      studyProgrammeCode: [user.programmeCode],
       periodNumber: studyPeriod,
     },
     process.env.TOKEN_SECRET,
