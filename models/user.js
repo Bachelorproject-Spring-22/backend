@@ -34,6 +34,12 @@ const userSchema = new Schema(
       type: Number,
       trim: true,
     },
+    courses: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
   },
   { timestamps: true },
 );
