@@ -12,15 +12,14 @@ export const updateUserWithCourses = async (req, res, next) => {
   const checkUser = await userModel.findOne({ username }, { courses: 1 }).sort({ _id: 1 }).lean();
   if (!checkUser) return next(createBadRequest('User(s) does not exist'));
 
-  const checkStudyCourse = await courseModel.find({ courseId: checkUser.courses }).lean();
-  if (!checkStudyCourse !== 0) return next(createBadRequest('course does not exist'));
+  const checkStudyCourse = await courseModel.find({ courseId: course }).lean();
+  if (checkStudyCourse.length === 0) return next(createBadRequest('course(s) does not exist'));
 
   const checkIfCourseIsAddedToUser = [];
-
-  checkStudyCourse.forEach((courses) => {
-    if (course.toString() === courses.courseId.toString()) {
-      checkIfCourseIsAddedToUser.push(courses.courseId);
-    }
+  course.forEach((courses) => {
+    checkUser.courses.forEach((data) => {
+      if (data === courses) return checkIfCourseIsAddedToUser.push(courses);
+    });
   });
 
   if (checkIfCourseIsAddedToUser.length !== 0)
@@ -30,21 +29,22 @@ export const updateUserWithCourses = async (req, res, next) => {
       }),
     );
 
+  //contains courses that is added on user
   const courses = [];
 
   // Used for existingUsers: https://stackoverflow.com/questions/1187518/how-to-get-the-difference-between-two-arrays-in-javascript
   // Used for userThatDoesNotExist: https://stackoverflow.com/questions/55773869/how-to-get-the-difference-of-two-string-arrays
   const existingCourses = course.filter((course) =>
-    checkStudyCourse.some((data) => {
-      return course === data.courseId && courses.push(data.courseId);
+    checkUser.courses.some((data) => {
+      return course !== data.courseId && courses.push(course);
     }),
   );
 
   const coursesThatDoesNotExist = course.filter((courseId) => !existingCourses.includes(courseId));
-  //await userModel.updateOne({ username }, { $push: { courses } });
+  await userModel.updateOne({ username }, { $push: { courses } });
 
   res.status(201).json({
-    message: `Users added successfully [${existingCourses}]`,
-    warning: `Users that were not added [${coursesThatDoesNotExist}]`,
+    message: `Courses added successfully [${courses}]`,
+    warning: `Courses that were not added [${coursesThatDoesNotExist}]`,
   });
 };
