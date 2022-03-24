@@ -9,6 +9,8 @@ import validateRequest from '../middleware/validate.middleware.js';
 import { quizUpload } from '../controllers/upload.controllers.js';
 import authorize from '../middleware/authorize.middleware.js';
 import asyncMiddleware from '../middleware/async.middleware.js';
+import { getUserSpecificCourseAndStudyprogrammeCode } from '../controllers/upload.controllers.js';
+import { updateUserWithCourses } from '../controllers/employee.controllers.js';
 
 import multer from 'multer';
 const fileStorageEngine = multer.diskStorage({
@@ -31,6 +33,10 @@ router.get('/', (req, res) => res.status(200).json({ msg: 'check' }));
 router.post('/login', authenticateSchema, asyncMiddleware(login));
 
 router.post('/upload', upload.single('file'), asyncMiddleware(quizUpload));
+
+router.get('/upload', authorize(), asyncMiddleware(getUserSpecificCourseAndStudyprogrammeCode));
+
+router.post('/course', authorize(), asyncMiddleware(updateUserWithCourses));
 
 /**
  * POST: Refresh Token
