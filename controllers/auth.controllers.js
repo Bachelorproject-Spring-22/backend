@@ -141,6 +141,7 @@ function generateJwtToken(user) {
       studyProgrammeCode: user.programmeCode,
       periodNumber: studyPeriod,
       courses: user.role !== 'student' ? user.courses : null,
+      studyProgrammes: user.role !== 'student' ? user.courses : null,
     },
     process.env.TOKEN_SECRET,
     {
