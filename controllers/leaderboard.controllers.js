@@ -271,6 +271,7 @@ export const courseSpecificLeaderboard = async (req, res, next) => {
       },
     },
   ]);
+
   const courseAndTotalAmountOfQuizzes = await studyProgrammeModel.aggregate([
     { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
     { $unwind: '$studyPeriods' },

@@ -40,6 +40,12 @@ const userSchema = new Schema(
         trim: true,
       },
     ],
+    studyProgrammes: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
   },
   { timestamps: true },
 );
