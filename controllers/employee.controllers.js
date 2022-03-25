@@ -1,5 +1,6 @@
 import courseModel from '../models/course.js';
 import userModel from '../models/user.js';
+import studyProgrammeModel from '../models/studyProgramme.js';
 
 import { createBadRequest, createNotFound } from '../utils/errors.js';
 
@@ -46,5 +47,42 @@ export const updateUserWithCourses = async (req, res, next) => {
   res.status(201).json({
     message: `Courses added successfully [${courses}]`,
     warning: `Courses that were not added [${coursesThatDoesNotExist}]`,
+  });
+};
+
+export const updateUserWithStudyplan = async (req, res, next) => {
+  const { studyProgrammeCode } = req.body;
+  const { username } = req.user;
+
+  if (!studyProgrammeCode) return next(createNotFound('Course not found'));
+
+  const checkUser = await userModel.findOne({ username }, { studyProgrammes: 1 }).sort({ _id: 1 }).lean();
+  if (!checkUser) return next(createBadRequest('User(s) does not exist'));
+
+  const checkStudyProgramme = await studyProgrammeModel.find({ studyProgrammeCode }).lean();
+  if (checkStudyProgramme.length === 0) return next(createBadRequest('studyplan(s) does not exist'));
+
+  const checkIfStudyProgrammeIsAddedToUser = [];
+
+  studyProgrammeCode.forEach((studyProgramme) => {
+    checkUser.studyProgrammes.forEach((data) => {
+      if (data === studyProgramme) return checkIfStudyProgrammeIsAddedToUser.push(studyProgramme);
+    });
+  });
+
+  if (checkIfStudyProgrammeIsAddedToUser.length !== 0)
+    return next(
+      createBadRequest(`Remove following studyProgrammeCode(s) from input [${checkIfStudyProgrammeIsAddedToUser}]`, {
+        studyProgramme: checkIfStudyProgrammeIsAddedToUser,
+      }),
+    );
+
+  const studyProgrammes = studyProgrammeCode.filter((studyProgramme) =>
+    checkUser.studyProgrammes.filter((data) => studyProgramme !== data),
+  );
+
+  await userModel.updateOne({ username }, { $push: { studyProgrammes } });
+  res.status(201).json({
+    message: `Courses added successfully [${studyProgrammes}]`,
   });
 };
