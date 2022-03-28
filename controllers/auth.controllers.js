@@ -1,9 +1,10 @@
 // Node modules
 import dotenv from 'dotenv';
-import jwt from 'jsonwebtoken';
+
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import studyProgrammeModel from '../models/studyProgramme.js';
+import generateJwtToken from '../utils/generateTokens.js';
 
 import { createBadRequest, createNotFound } from '../utils/errors.js';
 
@@ -105,49 +106,10 @@ function setTokenCookie(res, token) {
   res.cookie('refreshToken', token, cookieOptions);
 }
 
-function calculateSemester(startYear) {
-  let currentYear;
-  const getCurrentDate = Date.now();
-  const date = new Date(getCurrentDate);
-  const onlyYear = date.getFullYear();
-  const onlyMonth = date.getMonth() + 1;
-  currentYear = onlyYear - startYear;
-
-  let term, studyPeriod;
-  onlyMonth < 7 ? (term = 'spring') : (term = 'fall');
-  term == 'fall' ? currentYear++ : currentYear;
-
-  if (currentYear == 3) return term == 'fall' ? (studyPeriod = 5) : (studyPeriod = 6);
-  if (currentYear == 1) return term == 'fall' ? (studyPeriod = 1) : (studyPeriod = 2);
-  if (currentYear == 2) return term == 'fall' ? (studyPeriod = 3) : (studyPeriod = 4);
-  if (currentYear == 3) return term == 'fall' ? (studyPeriod = 5) : (studyPeriod = 6);
-  if (currentYear == 4) return term == 'fall' ? (studyPeriod = 7) : (studyPeriod = 8);
-  if (currentYear == 5) return term == 'fall' ? (studyPeriod = 9) : (studyPeriod = 10);
-}
-
 async function getRefreshToken(token) {
   const refreshToken = await refreshTokenModel.findOne({ token }).populate('user');
   if (!refreshToken || !refreshToken.isActive) throw 'Invalid token';
   return refreshToken;
-}
-
-function generateJwtToken(user) {
-  const studyPeriod = calculateSemester(user.year, user.role, user.programmeCode);
-  return jwt.sign(
-    {
-      _id: user.id,
-      role: user.role,
-      username: user.username,
-      studyProgrammeCode: user.programmeCode,
-      periodNumber: studyPeriod,
-      courses: user.role !== 'student' ? user.courses : null,
-      studyProgrammes: user.role !== 'student' ? user.courses : null,
-    },
-    process.env.TOKEN_SECRET,
-    {
-      expiresIn: '15m',
-    },
-  );
 }
 
 function generateRefreshToken(user, ipAddress) {
