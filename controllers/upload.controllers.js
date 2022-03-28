@@ -69,5 +69,5 @@ export const getUserSpecificCourseAndStudyprogrammeCode = async (req, res, next)
   const user = req.user;
   if (!user) next(createNotFound('User not found'));
   const courseIds = user.courses;
-  res.status(201).json({ message: 'Quiz uploaded successfully', courseIds });
+  res.status(201).json({ message: 'CourseId(s) found', courseIds });
 };
