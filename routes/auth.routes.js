@@ -6,23 +6,9 @@ const router = Router();
 import '../middleware/authorize.middleware.js';
 import { login, refreshToken, revokeToken } from '../controllers/auth.controllers.js';
 import validateRequest from '../middleware/validate.middleware.js';
-import { quizUpload } from '../controllers/upload.controllers.js';
+
 import authorize from '../middleware/authorize.middleware.js';
 import asyncMiddleware from '../middleware/async.middleware.js';
-import { getUserSpecificCourseAndStudyprogrammeCode } from '../controllers/upload.controllers.js';
-import { updateUserWithCourses } from '../controllers/employee.controllers.js';
-
-import multer from 'multer';
-const fileStorageEngine = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, './tmp');
-  },
-  filename: (req, file, cb) => {
-    cb(null, file.originalname);
-  },
-});
-
-const upload = multer({ storage: fileStorageEngine });
 
 router.get('/', (req, res) => res.status(200).json({ msg: 'check' }));
 
@@ -32,22 +18,16 @@ router.get('/', (req, res) => res.status(200).json({ msg: 'check' }));
  */
 router.post('/login', authenticateSchema, asyncMiddleware(login));
 
-router.post('/upload', upload.single('file'), asyncMiddleware(quizUpload));
-
-router.get('/upload', authorize(), asyncMiddleware(getUserSpecificCourseAndStudyprogrammeCode));
-
-router.post('/course', authorize(), asyncMiddleware(updateUserWithCourses));
-
 /**
  * POST: Refresh Token
  */
-router.post('/api/refresh', asyncMiddleware(refreshToken));
+router.post('/refresh', asyncMiddleware(refreshToken));
 
 /**
  * POST: Revoke token
  * Authorize: Restrict access to the route to authenticated users with specified roles
  */
-router.post('/api/revoke', authorize(), asyncMiddleware(revokeToken));
+router.post('/revoke', authorize(), asyncMiddleware(revokeToken));
 
 export default router;
 
