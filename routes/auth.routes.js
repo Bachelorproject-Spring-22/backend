@@ -16,7 +16,7 @@ router.get('/', (req, res) => res.status(200).json({ msg: 'check' }));
  * POST: User Login
  * req.body = email, password
  */
-router.post('/login', authenticateSchema, asyncMiddleware(login));
+router.post('/login', authorize(), authenticateSchema, asyncMiddleware(login));
 
 /**
  * POST: Refresh Token
