@@ -1,6 +1,9 @@
 import kahootModel from '../models/kahoot.js';
 import courseModel from '../models/course.js';
+import studyProgrammeModel from '../models/studyProgramme.js';
+import jwtDecode from 'jwt-decode';
 
+import calculateSemester from '../utils/calculateSemester.js';
 import { readDataFromExcel } from '../config/excelToJson.js';
 import { createBadRequest, createNotFound } from '../utils/errors.js';
 
@@ -69,6 +72,45 @@ export const getUserSpecificCourseAndStudyprogrammeCode = async (req, res, next)
   const user = req.user;
   if (!user) next(createNotFound('User not found'));
   if (!user.courses) next(createNotFound('Course(s) not found'));
-  const courseIds = user.courses;
+  const studyProgrammeCode = user.studyProgrammes;
+
+  let codes = [];
+  let number = [];
+
+  studyProgrammeCode.forEach((code) => {
+    let filterOutstring = code.match(/\d+/g);
+    let createYear = `20${filterOutstring}`;
+    let periodNumber = calculateSemester(createYear);
+    codes.push({ studyProgrammeCode: code, periodNumber });
+    number.push(periodNumber);
+  });
+
+  const studyProgrammeData = await studyProgrammeModel.aggregate([
+    { $match: { studyProgrammeCode: { $in: studyProgrammeCode } } },
+    { $unwind: '$studyPeriods' },
+    { $match: { 'studyPeriods.periodNumber': { $in: number } } },
+    { $unwind: '$studyPeriods.courses' },
+    {
+      $lookup: {
+        from: 'courses',
+        localField: 'studyPeriods.courses',
+        foreignField: '_id',
+        as: 'coursesInPeriod',
+      },
+    },
+    { $unwind: '$coursesInPeriod' },
+  ]);
+  const array = [];
+  codes.forEach((code) =>
+    studyProgrammeData.forEach(
+      (data) =>
+        code.studyProgrammeCode === data.studyProgrammeCode &&
+        code.periodNumber === data.studyPeriods.periodNumber &&
+        array.push(data.coursesInPeriod),
+    ),
+  );
+
+  const courseIds = [...new Set(array.map((item) => item.courseId))];
+
   res.status(201).json({ message: 'CourseId(s) found', courseIds });
 };
