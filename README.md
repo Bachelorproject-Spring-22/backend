@@ -20,7 +20,6 @@ BASEPREFIX: /api/v1/
 ROUTE Auth '/'
 GET /                                       | Used to check connection
 POST /login                                 | Input: Username && password
-POST /upload                                | Input: File && courseId
 POST /refresh                               | Input: HTTPOnly cookie
 POST /revoke                                | Input: HTTPOnly cookie
 
@@ -33,6 +32,14 @@ ROUTE leaderboard '/leaderboard'
 GET /                                       | Current semester course name, code and quiz overall placement
 GET /:courseId                              | Course leaderboard top 3, individual quiz results
 POST /:courseId                             | Input: startDate, endDate
+
+ROUTE leaderboard '/upload'
+POST /upload                                | Input: File && courseId
+GET /upload                                 | Get course ids from admin user
+
+ROUTE leaderboard '/manage'
+POST /course                                | Input: array of course id(s)
+POST /programme                             | Input: array of studyProgrammeCode(s)
 
 ROUTE superAdmin '/superAdmin'
 POST /user                                  | Input: Username, role, email, password, programmeCode, year
