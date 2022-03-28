@@ -68,6 +68,7 @@ export const quizUpload = async (req, res, next) => {
 export const getUserSpecificCourseAndStudyprogrammeCode = async (req, res, next) => {
   const user = req.user;
   if (!user) next(createNotFound('User not found'));
+  if (!user.courses) next(createNotFound('Course(s) not found'));
   const courseIds = user.courses;
   res.status(201).json({ message: 'CourseId(s) found', courseIds });
 };

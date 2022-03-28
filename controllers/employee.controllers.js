@@ -15,7 +15,6 @@ export const updateUserWithCourses = async (req, res, next) => {
 
   const checkStudyCourse = await courseModel.find({ courseId: course }).lean();
   if (checkStudyCourse.length === 0) return next(createBadRequest('course(s) does not exist'));
-
   const checkIfCourseIsAddedToUser = [];
   course.forEach((courses) => {
     checkUser.courses.forEach((data) => {
@@ -53,7 +52,6 @@ export const updateUserWithCourses = async (req, res, next) => {
 export const updateUserWithStudyplan = async (req, res, next) => {
   const { studyProgrammeCode } = req.body;
   const { username } = req.user;
-
   if (!studyProgrammeCode) return next(createNotFound('Course not found'));
 
   const checkUser = await userModel.findOne({ username }, { studyProgrammes: 1 }).sort({ _id: 1 }).lean();
@@ -63,7 +61,6 @@ export const updateUserWithStudyplan = async (req, res, next) => {
   if (checkStudyProgramme.length === 0) return next(createBadRequest('studyplan(s) does not exist'));
 
   const checkIfStudyProgrammeIsAddedToUser = [];
-
   studyProgrammeCode.forEach((studyProgramme) => {
     checkUser.studyProgrammes.forEach((data) => {
       if (data === studyProgramme) return checkIfStudyProgrammeIsAddedToUser.push(studyProgramme);
