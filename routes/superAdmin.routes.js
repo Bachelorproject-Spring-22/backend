@@ -7,6 +7,7 @@ import {
   updateStudyProgrammeWithUsers,
 } from '../controllers/superAdmin.controllers.js';
 import asyncMiddleware from '../middleware/async.middleware.js';
+import { updateUserWithStudyplan } from '../controllers/employee.controllers.js';
 
 const router = express.Router();
 
@@ -17,6 +18,8 @@ const router = express.Router();
 router.post('/user', asyncMiddleware(createUser));
 
 router.post('/course', asyncMiddleware(createCourse));
+
+router.post('/studyprogramme', asyncMiddleware(updateUserWithStudyplan));
 
 router.post('/programme', asyncMiddleware(createStudyProgramme));
 
