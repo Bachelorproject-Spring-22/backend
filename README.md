@@ -15,12 +15,14 @@ Source: https://medium.com/codechef-vit/a-better-project-structure-with-express-
 # Routes
 
 ```
+BASEPREFIX: /api/v1/
+
 ROUTE Auth '/'
 GET /                                       | Used to check connection
 POST /login                                 | Input: Username && password
 POST /upload                                | Input: File && courseId
-POST /api/refresh                           | Input: HTTPOnly cookie
-POST /api/revoke                            | Input: HTTPOnly cookie
+POST /refresh                               | Input: HTTPOnly cookie
+POST /revoke                                | Input: HTTPOnly cookie
 
 ROUTE Home '/home'
 GET /                                       | Current semester course name, code and quiz overall placement
