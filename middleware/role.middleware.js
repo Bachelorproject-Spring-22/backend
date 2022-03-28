@@ -20,7 +20,7 @@ export const Student = (req, res, next) => {
   next();
 };
 
-export const Admin = (req, res, next) => {
+export const Employee = (req, res, next) => {
   if ((req.user && req.user.role === 'teacher') || (req.user && req.user.role === 'superAdmin')) {
     next();
   } else {
@@ -28,4 +28,4 @@ export const Admin = (req, res, next) => {
   }
 };
 
-export default { Teacher, SuperAdmin, Student, Admin };
+export default { Teacher, SuperAdmin, Student, Employee };
