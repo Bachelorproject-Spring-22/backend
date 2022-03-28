@@ -17,8 +17,8 @@ const fileStorageEngine = multer.diskStorage({
 const upload = multer({ storage: fileStorageEngine });
 const router = express.Router();
 
-router.post('/upload', upload.single('file'), asyncMiddleware(quizUpload));
+router.post('/', upload.single('file'), asyncMiddleware(quizUpload));
 
-router.get('/upload', asyncMiddleware(getUserSpecificCourseAndStudyprogrammeCode));
+router.get('/', asyncMiddleware(getUserSpecificCourseAndStudyprogrammeCode));
 
 export default router;
