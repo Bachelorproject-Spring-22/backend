@@ -10,13 +10,13 @@ import validateRequest from '../middleware/validate.middleware.js';
 import authorize from '../middleware/authorize.middleware.js';
 import asyncMiddleware from '../middleware/async.middleware.js';
 
-router.get('/', (req, res) => res.status(200).json({ msg: 'check' }));
+router.get('/', authorize(), (req, res) => res.status(200).json({ msg: 'check' }));
 
 /**
  * POST: User Login
  * req.body = email, password
  */
-router.post('/login', authorize(), authenticateSchema, asyncMiddleware(login));
+router.post('/login', authenticateSchema, asyncMiddleware(login));
 
 /**
  * POST: Refresh Token
