@@ -258,6 +258,7 @@ export const semesterLeaderboardAndUserCourses = async (req, res, next) => {
         },
       },
     ]);
+    getUserSpecific = [];
 
     courseAndTotalAmountOfQuizzes = await studyProgrammeModel.aggregate([
       { $match: { studyProgrammeCode } },
