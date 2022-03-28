@@ -7,7 +7,7 @@ const ObjectId = mongoose.Types.ObjectId;
 import { createUnauthorized, createBadRequest, createNotFound } from '../utils/errors.js';
 
 export const semesterLeaderboardAndUserCourses = async (req, res, next) => {
-  const { username } = req.user;
+  const { username, role } = req.user;
   const headers = req.headers.authorization;
   if (!headers) return next(createUnauthorized());
   if (!username) return next(createNotFound('Username not found'));
@@ -17,176 +17,297 @@ export const semesterLeaderboardAndUserCourses = async (req, res, next) => {
   const name = 'kahoot';
   const variant = 'quiz';
 
-  const studyProgrammeData = await studyProgrammeModel.aggregate([
-    { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
-    { $unwind: '$studyPeriods' },
-    { $match: { 'studyPeriods.periodNumber': periodNumber } },
-    { $unwind: '$studyPeriods.courses' },
-    {
-      $lookup: {
-        from: 'courses',
-        localField: 'studyPeriods.courses',
-        foreignField: '_id',
-        as: 'coursesInPeriod',
-      },
-    },
-    { $unwind: '$coursesInPeriod' },
-    { $unwind: '$coursesInPeriod.activities' },
-    {
-      $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
-    },
-    {
-      $lookup: {
-        from: 'kahoots',
-        localField: 'coursesInPeriod.activities.sources',
-        foreignField: '_id',
-        as: 'kahootsInPeriod',
-      },
-    },
-    { $unwind: '$kahootsInPeriod' },
-    { $unwind: '$kahootsInPeriod.finalScores' },
-    {
-      $group: {
-        _id: {
-          player: '$kahootsInPeriod.finalScores.player',
-        },
-        totalScore: { $sum: '$kahootsInPeriod.finalScores.totalScore' },
-        quizzesAttended: { $count: {} },
-      },
-    },
-    { $sort: { totalScore: -1 } },
-    { $limit: 5 },
-    {
-      $group: {
-        _id: false,
-        player: {
-          $push: {
-            name: '$_id.player',
-            courseId: '$_id.courseId',
-            totalScore: '$totalScore',
-            quizzesAttended: '$quizzesAttended',
-          },
-        },
-      },
-    },
-    { $unwind: { path: '$player', includeArrayIndex: 'ranking' } },
-    {
-      $project: {
-        rank: { $add: ['$ranking', 1] },
-        player: 1,
-        totalScore: 1,
-        quizzesAttended: 1,
-        _id: 0,
-      },
-    },
-  ]);
+  let studyProgrammeData;
+  let getUserSpecific;
+  let courseAndTotalAmountOfQuizzes;
 
-  const getUserSpecific = await studyProgrammeModel.aggregate([
-    { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
-    { $unwind: '$studyPeriods' },
-    { $match: { 'studyPeriods.periodNumber': periodNumber } },
-    { $unwind: '$studyPeriods.courses' },
-    {
-      $lookup: {
-        from: 'courses',
-        localField: 'studyPeriods.courses',
-        foreignField: '_id',
-        as: 'coursesInPeriod',
-      },
-    },
-    { $unwind: '$coursesInPeriod' },
-    { $unwind: '$coursesInPeriod.activities' },
-    {
-      $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
-    },
-    {
-      $lookup: {
-        from: 'kahoots',
-        localField: 'coursesInPeriod.activities.sources',
-        foreignField: '_id',
-        as: 'kahootsInPeriod',
-      },
-    },
-    { $unwind: '$kahootsInPeriod' },
-    { $unwind: '$kahootsInPeriod.finalScores' },
-    {
-      $group: {
-        _id: {
-          player: '$kahootsInPeriod.finalScores.player',
-          code: '$coursesInPeriod.code',
-          name: '$coursesInPeriod.name',
-          courseId: '$coursesInPeriod.courseId',
+  if (role === 'student') {
+    studyProgrammeData = await studyProgrammeModel.aggregate([
+      { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
+      { $unwind: '$studyPeriods' },
+      { $match: { 'studyPeriods.periodNumber': periodNumber } },
+      { $unwind: '$studyPeriods.courses' },
+      {
+        $lookup: {
+          from: 'courses',
+          localField: 'studyPeriods.courses',
+          foreignField: '_id',
+          as: 'coursesInPeriod',
         },
-        totalScore: { $sum: '$kahootsInPeriod.finalScores.totalScore' },
-        quizzesAttended: { $count: {} },
       },
-    },
-    { $sort: { totalScore: -1 } },
-    {
-      $group: {
-        _id: false,
-        player: {
-          $push: {
-            name: '$_id.player',
-            code: '$_id.code',
-            courseName: '$_id.name',
-            courseId: '$_id.courseId',
-            totalScore: '$totalScore',
-            quizzesAttended: '$quizzesAttended',
+      { $unwind: '$coursesInPeriod' },
+      { $unwind: '$coursesInPeriod.activities' },
+      {
+        $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
+      },
+      {
+        $lookup: {
+          from: 'kahoots',
+          localField: 'coursesInPeriod.activities.sources',
+          foreignField: '_id',
+          as: 'kahootsInPeriod',
+        },
+      },
+      { $unwind: '$kahootsInPeriod' },
+      { $unwind: '$kahootsInPeriod.finalScores' },
+      {
+        $group: {
+          _id: {
+            player: '$kahootsInPeriod.finalScores.player',
+          },
+          totalScore: { $sum: '$kahootsInPeriod.finalScores.totalScore' },
+          quizzesAttended: { $count: {} },
+        },
+      },
+      { $sort: { totalScore: -1 } },
+      { $limit: 5 },
+      {
+        $group: {
+          _id: false,
+          player: {
+            $push: {
+              name: '$_id.player',
+              courseId: '$_id.courseId',
+              totalScore: '$totalScore',
+              quizzesAttended: '$quizzesAttended',
+            },
           },
         },
       },
-    },
-    { $unwind: { path: '$player', includeArrayIndex: 'ranking' } },
-    { $match: { 'player.name': username } },
-    { $project: { rank: { $add: ['$ranking', 1] }, player: 1, totalScore: 1, quizzesAttended: 1, _id: 0 } },
-  ]);
+      { $unwind: { path: '$player', includeArrayIndex: 'ranking' } },
+      {
+        $project: {
+          rank: { $add: ['$ranking', 1] },
+          player: 1,
+          totalScore: 1,
+          quizzesAttended: 1,
+          _id: 0,
+        },
+      },
+    ]);
 
-  const courseAndTotalAmountOfQuizzes = await studyProgrammeModel.aggregate([
-    { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
-    { $unwind: '$studyPeriods' },
-    { $match: { 'studyPeriods.periodNumber': periodNumber } },
-    { $unwind: '$studyPeriods.courses' },
-    {
-      $lookup: {
-        from: 'courses',
-        localField: 'studyPeriods.courses',
-        foreignField: '_id',
-        as: 'coursesInPeriod',
+    getUserSpecific = await studyProgrammeModel.aggregate([
+      { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
+      { $unwind: '$studyPeriods' },
+      { $match: { 'studyPeriods.periodNumber': periodNumber } },
+      { $unwind: '$studyPeriods.courses' },
+      {
+        $lookup: {
+          from: 'courses',
+          localField: 'studyPeriods.courses',
+          foreignField: '_id',
+          as: 'coursesInPeriod',
+        },
       },
-    },
-    { $unwind: '$coursesInPeriod' },
-    { $unwind: '$coursesInPeriod.activities' },
-    {
-      $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
-    },
-    {
-      $lookup: {
-        from: 'kahoots',
-        localField: 'coursesInPeriod.activities.sources',
-        foreignField: '_id',
-        as: 'kahootsInPeriod',
+      { $unwind: '$coursesInPeriod' },
+      { $unwind: '$coursesInPeriod.activities' },
+      {
+        $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
       },
-    },
-    { $unwind: '$kahootsInPeriod' },
-    {
-      $group: {
-        _id: { course: '$kahootsInPeriod.course' },
-        date: {
-          $push: {
-            _id: '$kahootsInPeriod',
+      {
+        $lookup: {
+          from: 'kahoots',
+          localField: 'coursesInPeriod.activities.sources',
+          foreignField: '_id',
+          as: 'kahootsInPeriod',
+        },
+      },
+      { $unwind: '$kahootsInPeriod' },
+      { $unwind: '$kahootsInPeriod.finalScores' },
+      {
+        $group: {
+          _id: {
+            player: '$kahootsInPeriod.finalScores.player',
+            code: '$coursesInPeriod.code',
+            name: '$coursesInPeriod.name',
+            courseId: '$coursesInPeriod.courseId',
+          },
+          totalScore: { $sum: '$kahootsInPeriod.finalScores.totalScore' },
+          quizzesAttended: { $count: {} },
+        },
+      },
+      { $sort: { totalScore: -1 } },
+      {
+        $group: {
+          _id: false,
+          player: {
+            $push: {
+              name: '$_id.player',
+              code: '$_id.code',
+              courseName: '$_id.name',
+              courseId: '$_id.courseId',
+              totalScore: '$totalScore',
+              quizzesAttended: '$quizzesAttended',
+            },
           },
         },
       },
-    },
-    {
-      $project: {
-        totalAmountOfQuizzes: { $size: ['$date'] },
-        course: '$_id.course',
-        _id: 0,
+      { $unwind: { path: '$player', includeArrayIndex: 'ranking' } },
+      { $match: { 'player.name': username } },
+      { $project: { rank: { $add: ['$ranking', 1] }, player: 1, totalScore: 1, quizzesAttended: 1, _id: 0 } },
+    ]);
+
+    courseAndTotalAmountOfQuizzes = await studyProgrammeModel.aggregate([
+      { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
+      { $unwind: '$studyPeriods' },
+      { $match: { 'studyPeriods.periodNumber': periodNumber } },
+      { $unwind: '$studyPeriods.courses' },
+      {
+        $lookup: {
+          from: 'courses',
+          localField: 'studyPeriods.courses',
+          foreignField: '_id',
+          as: 'coursesInPeriod',
+        },
       },
-    },
-  ]);
+      { $unwind: '$coursesInPeriod' },
+      { $unwind: '$coursesInPeriod.activities' },
+      {
+        $match: { $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }] },
+      },
+      {
+        $lookup: {
+          from: 'kahoots',
+          localField: 'coursesInPeriod.activities.sources',
+          foreignField: '_id',
+          as: 'kahootsInPeriod',
+        },
+      },
+      { $unwind: '$kahootsInPeriod' },
+      {
+        $group: {
+          _id: { course: '$kahootsInPeriod.course' },
+          date: {
+            $push: {
+              _id: '$kahootsInPeriod',
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          totalAmountOfQuizzes: { $size: ['$date'] },
+          course: '$_id.course',
+          _id: 0,
+        },
+      },
+    ]);
+  } else {
+    studyProgrammeData = await studyProgrammeModel.aggregate([
+      { $match: { studyProgrammeCode } },
+      { $unwind: '$studyPeriods' },
+      { $match: { 'studyPeriods.periodNumber': periodNumber } },
+      { $unwind: '$studyPeriods.courses' },
+      {
+        $lookup: {
+          from: 'courses',
+          localField: 'studyPeriods.courses',
+          foreignField: '_id',
+          as: 'coursesInPeriod',
+        },
+      },
+      { $unwind: '$coursesInPeriod' },
+      { $unwind: '$coursesInPeriod.activities' },
+      {
+        $match: {
+          $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }],
+        },
+      },
+      {
+        $lookup: {
+          from: 'kahoots',
+          localField: 'coursesInPeriod.activities.sources',
+          foreignField: '_id',
+          as: 'kahootsInPeriod',
+        },
+      },
+      { $unwind: '$kahootsInPeriod' },
+      { $unwind: '$kahootsInPeriod.finalScores' },
+      {
+        $group: {
+          _id: {
+            player: '$kahootsInPeriod.finalScores.player',
+          },
+          totalScore: { $sum: '$kahootsInPeriod.finalScores.totalScore' },
+          quizzesAttended: { $count: {} },
+        },
+      },
+      { $sort: { totalScore: -1 } },
+      { $limit: 5 },
+      {
+        $group: {
+          _id: false,
+          player: {
+            $push: {
+              name: '$_id.player',
+              courseId: '$_id.courseId',
+              totalScore: '$totalScore',
+              quizzesAttended: '$quizzesAttended',
+            },
+          },
+        },
+      },
+      { $unwind: { path: '$player', includeArrayIndex: 'ranking' } },
+      {
+        $project: {
+          rank: { $add: ['$ranking', 1] },
+          player: 1,
+          totalScore: 1,
+          quizzesAttended: 1,
+          _id: 0,
+        },
+      },
+    ]);
+
+    courseAndTotalAmountOfQuizzes = await studyProgrammeModel.aggregate([
+      { $match: { studyProgrammeCode } },
+      { $unwind: '$studyPeriods' },
+      { $match: { 'studyPeriods.periodNumber': periodNumber } },
+      { $unwind: '$studyPeriods.courses' },
+      {
+        $lookup: {
+          from: 'courses',
+          localField: 'studyPeriods.courses',
+          foreignField: '_id',
+          as: 'coursesInPeriod',
+        },
+      },
+      { $unwind: '$coursesInPeriod' },
+      { $unwind: '$coursesInPeriod.activities' },
+      {
+        $match: {
+          $and: [{ 'coursesInPeriod.activities.name': name, 'coursesInPeriod.activities.variant': variant }],
+        },
+      },
+      {
+        $lookup: {
+          from: 'kahoots',
+          localField: 'coursesInPeriod.activities.sources',
+          foreignField: '_id',
+          as: 'kahootsInPeriod',
+        },
+      },
+      { $unwind: '$kahootsInPeriod' },
+      {
+        $group: {
+          _id: { course: '$kahootsInPeriod.course' },
+          date: {
+            $push: {
+              _id: '$kahootsInPeriod',
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          totalAmountOfQuizzes: { $size: ['$date'] },
+          course: '$_id.course',
+          _id: 0,
+        },
+      },
+    ]);
+  }
+
   res.status(201).json({
     message: `StudyPlan: ${studyProgrammeCode}`,
     studyProgrammeData,
