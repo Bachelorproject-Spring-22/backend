@@ -36,6 +36,7 @@ POST /:courseId                             | Input: startDate, endDate
 ROUTE Manage '/manage'
 POST /                                      | Input: File && courseId
 GET /                                       | Get course ids from admin user
+GET /programme                              | Get all studyplans
 POST /programme                             | Input: array of studyProgrammeCode(s)
 DELETE /courses/:courseId/:quizId'          | Params: courseId && quizId
 
