@@ -11,10 +11,6 @@ import { updateUserWithStudyplan } from '../controllers/employee.controllers.js'
 
 const router = express.Router();
 
-/**
- * POST
- * req.body = name, surname, role, password
- */
 router.post('/user', asyncMiddleware(createUser));
 
 router.post('/course', asyncMiddleware(createCourse));

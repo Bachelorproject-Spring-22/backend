@@ -23,14 +23,22 @@ const fileStorageEngine = multer.diskStorage({
 const upload = multer({ storage: fileStorageEngine });
 const router = express.Router();
 
+/*
+  ROUTE Manage '/manage'
+  POST /                                      | Input: File && courseId
+  GET /                                       | Get course ids from admin user
+  GET /programme                              | Get all studyplans
+  POST /programme                             | Input: array of studyProgrammeCode(s)
+  GET /courses                                | Get course info from user subscribed studyplans
+  GET /courses/:courseId                      | Get course and quiz info from user subscribed studyplans
+  DELETE /courses/:courseId/:quizId'          | Params: courseId && quizId
+*/
+
 router.post('/', upload.single('file'), asyncMiddleware(quizUpload));
 router.get('/', asyncMiddleware(getUserSpecificCourse));
 
 router.get('/programme', asyncMiddleware(getAllStudyPlans));
 router.post('/programme', asyncMiddleware(updateUserWithStudyplan));
-
-//ADD GET courses for specific user -> courseId, name, code
-//ADD GET courses and quizID for specific user -> courseId, name, code, quizId and title
 
 router.get('/courses', asyncMiddleware(getUserSpecificCourse));
 router.get('/courses/:courseId', asyncMiddleware(getUserSpecificCourseAndQuiz));

@@ -10,23 +10,20 @@ import validateRequest from '../middleware/validate.middleware.js';
 import authorize from '../middleware/authorize.middleware.js';
 import asyncMiddleware from '../middleware/async.middleware.js';
 
+/*
+  ROUTE Auth '/'
+  GET /                                       | Used to check connection
+  POST /login                                 | Input: Username && password
+  POST /refresh                               | Input: HTTPOnly cookie
+  POST /revoke                                | Input: HTTPOnly cookie
+*/
+
 router.get('/', authorize(), (req, res) => res.status(200).json({ msg: 'check' }));
 
-/**
- * POST: User Login
- * req.body = email, password
- */
 router.post('/login', authenticateSchema, asyncMiddleware(login));
 
-/**
- * POST: Refresh Token
- */
 router.post('/refresh', asyncMiddleware(refreshToken));
 
-/**
- * POST: Revoke token
- * Authorize: Restrict access to the route to authenticated users with specified roles
- */
 router.post('/revoke', authorize(), asyncMiddleware(revokeToken));
 
 export default router;
