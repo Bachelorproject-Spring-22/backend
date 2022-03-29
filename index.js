@@ -14,7 +14,6 @@ import authRoute from './routes/auth.routes.js';
 import userRoute from './routes/superAdmin.routes.js';
 import leaderboardRoute from './routes/leaderboard.routes.js';
 import homeRoute from './routes/home.routes.js';
-import uploadRoute from './routes/upload.routes.js';
 import manageRoute from './routes/manage.routes.js';
 
 import './config/passportAuth.js';
@@ -51,7 +50,6 @@ async function bootstrap() {
   app.use('/api/v1/home', authUser, homeRoute);
   app.use('/api/v1/leaderboard', authUser, leaderboardRoute);
   app.use('/api/v1/manage', authUser, hasRole.Employee, manageRoute);
-  app.use('/api/v1/upload', authUser, hasRole.Employee, uploadRoute);
   app.use('/api/v1/superAdmin', authUser, hasRole.SuperAdmin, userRoute);
 
   app.use((req, res, next) => {
