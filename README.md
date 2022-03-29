@@ -38,6 +38,8 @@ POST /                                      | Input: File && courseId
 GET /                                       | Get course ids from admin user
 GET /programme                              | Get all studyplans
 POST /programme                             | Input: array of studyProgrammeCode(s)
+GET /courses                                | Get course info from user subscribed studyplans
+GET /courses/:courseId                      | Get course and quiz info from user subscribed studyplans
 DELETE /courses/:courseId/:quizId'          | Params: courseId && quizId
 
 ROUTE superAdmin '/superAdmin'
