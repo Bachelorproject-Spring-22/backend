@@ -258,7 +258,28 @@ export const semesterLeaderboardAndUserCourses = async (req, res, next) => {
         },
       },
     ]);
-    getUserSpecific = [];
+
+    const courses = await studyProgrammeModel.aggregate([
+      { $match: { studyProgrammeCode } },
+      { $unwind: '$studyPeriods' },
+      { $match: { 'studyPeriods.periodNumber': periodNumber } },
+      { $unwind: '$studyPeriods.courses' },
+      {
+        $lookup: {
+          from: 'courses',
+          localField: 'studyPeriods.courses',
+          foreignField: '_id',
+          as: 'coursesInPeriod',
+        },
+      },
+      { $unwind: '$coursesInPeriod' },
+      { $project: { 'coursesInPeriod.name': 1, 'coursesInPeriod.code': 1, 'coursesInPeriod.courseId': 1, _id: 0 } },
+    ]);
+
+    getUserSpecific = courses.map(({ coursesInPeriod }) => {
+      const { code, courseId, name } = coursesInPeriod;
+      return { player: { courseId, code, name } };
+    });
 
     courseAndTotalAmountOfQuizzes = await studyProgrammeModel.aggregate([
       { $match: { studyProgrammeCode } },
