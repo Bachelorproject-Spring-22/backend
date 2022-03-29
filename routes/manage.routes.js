@@ -3,7 +3,6 @@ import {
   updateUserWithStudyplan,
   deleteQuizFromCourse,
   quizUpload,
-  getUserSpecificCourseAndStudyprogrammeCode,
   getAllStudyPlans,
   getUserSpecificCourse,
   getUserSpecificCourseAndQuiz,
@@ -25,8 +24,7 @@ const upload = multer({ storage: fileStorageEngine });
 const router = express.Router();
 
 router.post('/', upload.single('file'), asyncMiddleware(quizUpload));
-
-router.get('/', asyncMiddleware(getUserSpecificCourseAndStudyprogrammeCode));
+router.get('/', asyncMiddleware(getUserSpecificCourse));
 
 router.get('/programme', asyncMiddleware(getAllStudyPlans));
 router.post('/programme', asyncMiddleware(updateUserWithStudyplan));
