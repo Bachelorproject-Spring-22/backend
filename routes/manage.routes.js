@@ -5,6 +5,8 @@ import {
   quizUpload,
   getUserSpecificCourseAndStudyprogrammeCode,
   getAllStudyPlans,
+  getUserSpecificCourse,
+  getUserSpecificCourseAndQuiz,
 } from '../controllers/employee.controllers.js';
 import asyncMiddleware from '../middleware/async.middleware.js';
 
@@ -28,6 +30,12 @@ router.get('/', asyncMiddleware(getUserSpecificCourseAndStudyprogrammeCode));
 
 router.get('/programme', asyncMiddleware(getAllStudyPlans));
 router.post('/programme', asyncMiddleware(updateUserWithStudyplan));
+
+//ADD GET courses for specific user -> courseId, name, code
+//ADD GET courses and quizID for specific user -> courseId, name, code, quizId and title
+
+router.get('/courses', asyncMiddleware(getUserSpecificCourse));
+router.get('/courses/:courseId', asyncMiddleware(getUserSpecificCourseAndQuiz));
 
 router.delete('/courses/:courseId/:quizId', asyncMiddleware(deleteQuizFromCourse));
 
