@@ -8,17 +8,21 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import helmet from 'helmet';
-import { connectToMongoDB } from './config/mongoose.js ';
 
+// Config
+import { connectToMongoDB } from './config/mongoose.js ';
+import './config/passportAuth.js';
+
+// Routes
 import authRoute from './routes/auth.routes.js';
 import userRoute from './routes/superAdmin.routes.js';
 import leaderboardRoute from './routes/leaderboard.routes.js';
 import homeRoute from './routes/home.routes.js';
 import manageRoute from './routes/manage.routes.js';
 
-import './config/passportAuth.js';
-
+// Middleware
 import hasRole from './middleware/role.middleware.js';
+
 /**
  * CookieParser: Read cookie information
  * Morgan: Easier to see what requests are sent via postman
