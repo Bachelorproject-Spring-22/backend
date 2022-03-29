@@ -33,12 +33,13 @@ GET /                                       | Current semester course name, code
 GET /:courseId                              | Course leaderboard top 3, individual quiz results
 POST /:courseId                             | Input: startDate, endDate
 
-ROUTE leaderboard '/upload'
+ROUTE Upload '/upload'
 POST /upload                                | Input: File && courseId
 GET /upload                                 | Get course ids from admin user
 
-ROUTE leaderboard '/manage'
+ROUTE Manage '/manage'
 POST /programme                             | Input: array of studyProgrammeCode(s)
+DELETE /courses/:courseId/:quizId'          | Params: courseId && quizId
 
 ROUTE superAdmin '/superAdmin'
 POST /user                                  | Input: Username, role, email, password, programmeCode, year
