@@ -72,8 +72,8 @@ export const quizUpload = async (req, res, next) => {
 export const getUserSpecificCourseAndStudyprogrammeCode = async (req, res, next) => {
   const user = req.user;
   if (!user) next(createNotFound('User not found'));
-  if (!user.courses) next(createNotFound('Course(s) not found'));
   const studyProgrammeCode = user.studyProgrammes;
+  if (!user.studyProgrammes) next(createNotFound('StudyProgrammes not found'));
 
   let codes = [];
   let number = [];
@@ -111,7 +111,8 @@ export const getUserSpecificCourseAndStudyprogrammeCode = async (req, res, next)
     ),
   );
 
-  const courseIds = [...new Set(array.map((item) => item.courseId))];
+  const unique = getUniqueObjecs(array, 'courseId');
+  const courseIds = unique.map((course) => createCourseObject(course));
 
   res.status(201).json({ message: 'CourseId(s) found', courseIds });
 };
@@ -210,4 +211,139 @@ export const getAllStudyPlans = async (req, res, next) => {
     message: 'All studyProgrammeCodes',
     studyProgrammeCodes,
   });
+};
+
+export const getUserSpecificCourse = async (req, res, next) => {
+  const user = req.user;
+  if (!user) return next(createNotFound('User not found'));
+
+  const studyProgrammeCode = user.studyProgrammes;
+  if (!user.studyProgrammes) next(createNotFound('StudyProgrammes not found'));
+
+  let codes = [];
+  let number = [];
+
+  studyProgrammeCode.forEach((code) => {
+    let filterOutstring = code.match(/\d+/g);
+    let createYear = `20${filterOutstring}`;
+    let periodNumber = calculateSemester(createYear);
+    codes.push({ studyProgrammeCode: code, periodNumber });
+    number.push(periodNumber);
+  });
+
+  const studyProgrammeData = await studyProgrammeModel.aggregate([
+    { $match: { studyProgrammeCode: { $in: studyProgrammeCode } } },
+    { $unwind: '$studyPeriods' },
+    { $match: { 'studyPeriods.periodNumber': { $in: number } } },
+    { $unwind: '$studyPeriods.courses' },
+    {
+      $lookup: {
+        from: 'courses',
+        localField: 'studyPeriods.courses',
+        foreignField: '_id',
+        as: 'coursesInPeriod',
+      },
+    },
+    { $unwind: '$coursesInPeriod' },
+  ]);
+  const array = [];
+  codes.forEach((code) =>
+    studyProgrammeData.forEach(
+      (data) =>
+        code.studyProgrammeCode === data.studyProgrammeCode &&
+        code.periodNumber === data.studyPeriods.periodNumber &&
+        array.push(data.coursesInPeriod),
+    ),
+  );
+  const unique = getUniqueObjecs(array, 'courseId');
+  const courses = unique.map((course) => createCourseObject(course, 'course'));
+  res.status(201).json({ message: 'CourseId(s) found', courses });
+};
+
+export const getUserSpecificCourseAndQuiz = async (req, res, next) => {
+  const { courseId } = req.params;
+  const user = req.user;
+  if (!user) return next(createNotFound('User not found'));
+
+  const studyProgrammeCode = user.studyProgrammes;
+  if (!user.studyProgrammes) next(createNotFound('StudyProgrammes not found'));
+
+  let codes = [];
+  let number = [];
+
+  studyProgrammeCode.forEach((code) => {
+    let filterOutstring = code.match(/\d+/g);
+    let createYear = `20${filterOutstring}`;
+    let periodNumber = calculateSemester(createYear);
+    codes.push({ studyProgrammeCode: code, periodNumber });
+    number.push(periodNumber);
+  });
+
+  const studyProgrammeData = await studyProgrammeModel.aggregate([
+    { $match: { studyProgrammeCode: { $in: studyProgrammeCode } } },
+    { $unwind: '$studyPeriods' },
+    { $match: { 'studyPeriods.periodNumber': { $in: number } } },
+    { $unwind: '$studyPeriods.courses' },
+    {
+      $lookup: {
+        from: 'courses',
+        localField: 'studyPeriods.courses',
+        foreignField: '_id',
+        as: 'coursesInPeriod',
+      },
+    },
+    { $match: { 'coursesInPeriod.courseId': courseId } },
+    { $unwind: '$coursesInPeriod' },
+    { $unwind: '$coursesInPeriod.activities' },
+    {
+      $match: { $and: [{ 'coursesInPeriod.activities.name': 'kahoot', 'coursesInPeriod.activities.variant': 'quiz' }] },
+    },
+    {
+      $lookup: {
+        from: 'kahoots',
+        localField: 'coursesInPeriod.activities.sources',
+        foreignField: '_id',
+        as: 'kahootsInPeriod',
+      },
+    },
+    { $unwind: '$kahootsInPeriod' },
+  ]);
+
+  const array = [];
+  const arr = [];
+  codes.forEach((code) =>
+    studyProgrammeData.forEach(
+      (data) =>
+        code.studyProgrammeCode === data.studyProgrammeCode &&
+        code.periodNumber === data.studyPeriods.periodNumber &&
+        array.push(data.coursesInPeriod) &&
+        arr.push(data.kahootsInPeriod),
+    ),
+  );
+  // sort out unique courses from all studyProgrammes
+  const uniqueCourses = getUniqueObjecs(array, 'courseId');
+  const courses = uniqueCourses.map((course) => createCourseObject(course));
+
+  // sort out all unique quizzes from all studyProgrammes
+  const uniqueQuizzes = getUniqueObjecs(arr, 'quizId');
+  const quizzes = uniqueQuizzes.map((quiz) => createQuizObject(quiz));
+  res.status(201).json({ message: 'Course and quiz information found', courses: courses[0], quizzes });
+};
+
+//https://reactgo.com/removeduplicateobjects/
+const getUniqueObjecs = (arr, comp) => {
+  const unique = arr
+    .map((e) => e[comp])
+    .map((e, i, final) => final.indexOf(e) === i && i)
+    .filter((e) => arr[e])
+    .map((e) => arr[e]);
+  return unique;
+};
+
+const createCourseObject = (item) => {
+  return { courseId: item.courseId, name: item.name, code: item.code };
+};
+
+const createQuizObject = (item) => {
+  return { title: item.title, quizId: item.quizId };
 };
