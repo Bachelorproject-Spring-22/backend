@@ -1,17 +1,24 @@
+/***************************************************************************************
+ *    Title: backend/controllers/auth.controller.js
+ *    Author: Cornelius Sandmæl, Glenn Hansen, Tom Schrier
+ *    Date: 13.05.2021
+ *    Code version: 1.o
+ *    Availability: https://github.com/Webproject-exam/backend/blob/main/controllers/auth.controller.js
+ *
+ ***************************************************************************************/
 // Node modules
 import dotenv from 'dotenv';
 
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import studyProgrammeModel from '../models/studyProgramme.js';
-import generateJwtToken from '../utils/generateTokens.js';
-
-import { createBadRequest, createNotFound } from '../utils/errors.js';
 
 dotenv.config();
 // Local files
 import refreshTokenModel from '../models/refreshToken.js';
 import userModel from '../models/user.js';
+import generateJwtToken from '../utils/generateTokens.js';
+
+import { createBadRequest, createNotFound } from '../utils/errors.js';
 
 // User login with username and password
 export const login = async (req, res, next) => {
