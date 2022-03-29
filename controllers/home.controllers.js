@@ -1,24 +1,34 @@
-import studyProgrammeModel from '../models/studyProgramme.js';
 import jwtDecode from 'jwt-decode';
 import mongoose from 'mongoose';
-const ObjectId = mongoose.Types.ObjectId;
+
+// Models
+import studyProgrammeModel from '../models/studyProgramme.js';
+
+// Utils
 import { createBadRequest, createNotFound, createUnauthorized } from '../utils/errors.js';
+
+// Misc
+const ObjectId = mongoose.Types.ObjectId;
 
 export const userSpecificCourseAndRank = async (req, res, next) => {
   const { username } = req.user;
   const headers = req.headers.authorization;
+
   if (!headers) return next(createUnauthorized());
   if (!username) return next(createNotFound('username not found'));
 
   const token = headers.split(' ')[1];
   const { periodNumber, studyProgrammeCode, _id } = jwtDecode(token);
+
   const name = 'kahoot';
   const variant = 'quiz';
-  if (!variant || !name) return next(createBadRequest('Variant and name is required'));
-
   const studyProgramme = await studyProgrammeModel.find({ studyProgrammeCode });
+
+  if (!variant || !name) return next(createBadRequest('Variant and name is required'));
   if (!studyProgramme) return next(createNotFound('StudyProgramme does not exist'));
 
+  // Query: check if user is added to course
+  // Output: User rank for the course, course code and course name
   const studyProgrammeData = await studyProgrammeModel.aggregate([
     { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
     { $unwind: '$studyPeriods' },
@@ -90,15 +100,19 @@ export const getUserSpecificCourseResultsLeaderBoard = async (req, res, next) =>
   const { username } = req.user;
   const { courseId } = req.params;
   const headers = req.headers.authorization;
+
   if (!headers) return next(createUnauthorized());
   if (!courseId) return next(createNotFound('Course id not found'));
   if (!username) return next(createNotFound('Username not found'));
 
   const token = headers.split(' ')[1];
   const { periodNumber, studyProgrammeCode, _id } = jwtDecode(token);
+
   const name = 'kahoot';
   const variant = 'quiz';
 
+  // Query: check if user is added to course
+  // Output: User rank for the course, course code and course name
   const studyProgrammeData = await studyProgrammeModel.aggregate([
     { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
     { $unwind: '$studyPeriods' },
@@ -161,6 +175,7 @@ export const getUserSpecificCourseResultsLeaderBoard = async (req, res, next) =>
     { $project: { rank: { $add: ['$ranking', 1] }, player: 1, totalScore: 1, quizzesAttended: 1, _id: 0 } },
   ]);
 
+  // Query: Get all quizes that user has participate in selected course
   const getUserSpecific = await studyProgrammeModel.aggregate([
     { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
     { $unwind: '$studyPeriods' },
@@ -188,7 +203,7 @@ export const getUserSpecificCourseResultsLeaderBoard = async (req, res, next) =>
         as: 'kahootsInPeriod',
       },
     },
-    { $unwind: '$kahootsInPeriod' },
+    { $unwind: { path: '$kahootsInPeriod', includeArrayIndex: 'quizNumber' } },
     { $unwind: '$kahootsInPeriod.finalScores' },
     { $match: { 'kahootsInPeriod.finalScores.player': username } },
     { $sort: { 'kahootsInPeriod.playedOn': 1 } }, // sort by ascending date
@@ -200,6 +215,7 @@ export const getUserSpecificCourseResultsLeaderBoard = async (req, res, next) =>
         'kahootsInPeriod.playedOn': 1,
         'kahootsInPeriod.quizId': 1,
         'kahootsInPeriod.title': 1,
+        quizNumber: '$quizNumber',
         _id: 0,
       },
     },
@@ -216,15 +232,18 @@ export const getUserSpecificCourseResultsLeaderBoardQuiz = async (req, res, next
   const { username } = req.user;
   const { courseId, quizId } = req.params;
   const headers = req.headers.authorization;
+
   if (!headers) return next(createUnauthorized());
   if (!courseId || !quizId) return next(createNotFound('Course id or quiz id not found'));
   if (!username) return next(createNotFound('Username not found'));
 
   const token = headers.split(' ')[1];
   const { periodNumber, studyProgrammeCode, _id } = jwtDecode(token);
+
   const name = 'kahoot';
   const variant = 'quiz';
 
+  // Query: Get all quizes that user has participate in selected course
   const getUserSpecific = await studyProgrammeModel.aggregate([
     { $match: { $and: [{ studyProgrammeCode }, { users: { $in: [ObjectId(_id), '$users'] } }] } },
     { $unwind: '$studyPeriods' },
@@ -267,7 +286,7 @@ export const getUserSpecificCourseResultsLeaderBoardQuiz = async (req, res, next
         'kahootsInPeriod.title': 1,
         'coursesInPeriod.code': 1,
         'coursesInPeriod.name': 1,
-        quizNumber: { $add: ['$quizNumber', 1] },
+        quizNumber: '$quizNumber',
         _id: 0,
       },
     },
