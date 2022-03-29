@@ -1,11 +1,14 @@
 import bcrypt from 'bcryptjs';
+
+// Models
 import courseModel from '../models/course.js';
 import studyProgrammeModel from '../models/studyProgramme.js';
 import userModel from '../models/user.js';
 
+// Utils
 import { createBadRequest, createNotFound } from '../utils/errors.js';
-// Helper functions
 
+// Helper functions
 const createActivitiesForCourse = (activities) => {
   const activitiesArray = [];
 
@@ -210,12 +213,6 @@ export const updateStudyProgrammeWithUsers = async (req, res, next) => {
 //
 
 export const updateStudyPeriodWithCourse = async (req, res, next) => {
-  // Pseudo code
-  // Check if req.body contains the required info | x
-  // Check if course exist | x
-  // Check if studyProgramme exists | x
-  // Check if course is already added to the courseGroup | x
-  // Update courseGroup with the new course | x
   const courseId = req.params.courseId;
   const studyProgrammeCode = req.params.studyProgrammeCode;
   const { periodNumber } = req.body;
