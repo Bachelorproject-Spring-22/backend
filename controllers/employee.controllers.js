@@ -1,24 +1,27 @@
+// Models
 import userModel from '../models/user.js';
 import studyProgrammeModel from '../models/studyProgramme.js';
 import courseModel from '../models/course.js';
 import kahootModel from '../models/kahoot.js';
-import generateJwtToken from '../utils/generateTokens.js';
 
+// Utils
+import generateJwtToken from '../utils/generateTokens.js';
 import calculateSemester from '../utils/calculateSemester.js';
-import { readDataFromExcel } from '../config/excelToJson.js';
 import { createBadRequest, createNotFound } from '../utils/errors.js';
+
+// Misc
+import { readDataFromExcel } from '../config/excelToJson.js';
 
 export const quizUpload = async (req, res, next) => {
   const filePath = req.file;
   const courseId = req.body.courseId;
 
   if (!courseId) return next(createNotFound('Course id not found'));
-  if (!filePath) return next(createNotFound('filePath'));
+  if (!filePath) return next(createNotFound('File not found'));
 
   const name = 'kahoot';
   const variant = 'quiz';
 
-  if (!filePath) return next(createBadRequest('Please upload a file'));
   const dataFromExcel = readDataFromExcel(req.file.path);
   if (!dataFromExcel) return next(createBadRequest('Upload a valid file'));
 
@@ -35,13 +38,14 @@ export const quizUpload = async (req, res, next) => {
     }
   });
 
+  // Remove spaces and insert _ for title
   const titleFromExcel = dataFromExcel['Overview'][0].A;
   var sanitized = titleFromExcel.replace(/[^\w\s]/gi, '');
   const title = sanitized.replace(/\s+/g, '_');
-  const utc = dataFromExcel['Overview'][1].B;
 
   // https://stackoverflow.com/questions/38735927/add-offset-to-utc-date-in-javascript
   // Add one hour to playedOn because of timezone difference
+  const utc = dataFromExcel['Overview'][1].B;
   const playedOn = new Date(new Date(utc) * 1 + 60 * 60 * 1000);
   const kahoot = new kahootModel({
     title,
@@ -59,6 +63,7 @@ export const quizUpload = async (req, res, next) => {
   const checkIfQuizExists = await kahootModel.findOne({ quizId: kahoot.quizId }, { quizId: 1, _id: 0 }).lean();
   if (checkIfQuizExists) return next(createBadRequest(`Quiz ${title} is already uploaded to this course`));
 
+  // Save kahoot and ppopulate course with quiz reference
   await kahoot.save().then(async ({ _id }) => {
     await courseModel.updateOne(
       { courseId },
@@ -71,25 +76,29 @@ export const quizUpload = async (req, res, next) => {
 
 export const getUserSpecificCourseAndStudyprogrammeCode = async (req, res, next) => {
   const user = req.user;
-  if (!user) next(createNotFound('User not found'));
   const studyProgrammeCode = user.studyProgrammes;
+
+  if (!user) next(createNotFound('User not found'));
   if (!user.studyProgrammes) next(createNotFound('StudyProgrammes not found'));
 
-  let codes = [];
-  let number = [];
+  let studyProgrammeCodes = [];
+  let periodNumbers = [];
 
+  // Calculate current semester for each studyprogramme the user has subscribed to
   studyProgrammeCode.forEach((code) => {
-    let filterOutstring = code.match(/\d+/g);
-    let createYear = `20${filterOutstring}`;
+    let filterOutString = code.match(/\d+/g);
+    let createYear = `20${filterOutString}`;
     let periodNumber = calculateSemester(createYear);
-    codes.push({ studyProgrammeCode: code, periodNumber });
-    number.push(periodNumber);
+
+    studyProgrammeCodes.push({ studyProgrammeCode: code, periodNumber });
+    periodNumbers.push(periodNumber);
   });
 
+  // Fetch courses from each studyplan current semester
   const studyProgrammeData = await studyProgrammeModel.aggregate([
     { $match: { studyProgrammeCode: { $in: studyProgrammeCode } } },
     { $unwind: '$studyPeriods' },
-    { $match: { 'studyPeriods.periodNumber': { $in: number } } },
+    { $match: { 'studyPeriods.periodNumber': { $in: periodNumbers } } },
     { $unwind: '$studyPeriods.courses' },
     {
       $lookup: {
@@ -101,17 +110,21 @@ export const getUserSpecificCourseAndStudyprogrammeCode = async (req, res, next)
     },
     { $unwind: '$coursesInPeriod' },
   ]);
-  const array = [];
-  codes.forEach((code) =>
+
+  const courses = [];
+
+  // Check if user studyProgramme and fetched studyprogramme is matching then push coursesInPeriod for current semester
+  studyProgrammeCodes.forEach((userStudyProgramme) =>
     studyProgrammeData.forEach(
-      (data) =>
-        code.studyProgrammeCode === data.studyProgrammeCode &&
-        code.periodNumber === data.studyPeriods.periodNumber &&
-        array.push(data.coursesInPeriod),
+      (fetchedStudyProgramme) =>
+        userStudyProgramme.studyProgrammeCode === fetchedStudyProgramme.studyProgrammeCode &&
+        userStudyProgramme.periodNumber === fetchedStudyProgramme.studyPeriods.periodNumber &&
+        courses.push(fetchedStudyProgramme.coursesInPeriod),
     ),
   );
 
-  const unique = getUniqueObjecs(array, 'courseId');
+  // Filter out unique course ids from user subscribed studyplans (Same course can be added to different studyplans)
+  const unique = getUniqueObjecs(courses, 'courseId');
   const courseIds = unique.map((course) => createCourseObject(course));
 
   res.status(201).json({ message: 'CourseId(s) found', courseIds });
@@ -121,18 +134,19 @@ export const updateUserWithStudyplan = async (req, res, next) => {
   const { studyProgrammeCode } = req.body;
   const user = req.user;
   const { username } = user;
-  if (!studyProgrammeCode) return next(createNotFound('StudyProgrammeCode not found'));
 
-  const checkUser = await userModel.findOne({ username }, { studyProgrammes: 1 }).sort({ _id: 1 }).lean();
-  if (!checkUser) return next(createBadRequest('User(s) does not exist'));
+  if (!studyProgrammeCode) return next(createNotFound('StudyProgramme not found'));
+
+  const userToUpdate = await userModel.findOne({ username }, { studyProgrammes: 1 }).sort({ _id: 1 }).lean();
+  if (!userToUpdate) return next(createBadRequest('User does not exist'));
 
   const checkStudyProgramme = await studyProgrammeModel.find({ studyProgrammeCode }).lean();
-  if (checkStudyProgramme.length === 0) return next(createBadRequest('studyplan(s) does not exist'));
+  if (checkStudyProgramme.length === 0) return next(createBadRequest('Studyplan(s) does not exist'));
 
   const checkIfStudyProgrammeIsAddedToUser = [];
   studyProgrammeCode.forEach((studyProgramme) => {
-    checkUser.studyProgrammes.forEach((data) => {
-      if (data === studyProgramme) return checkIfStudyProgrammeIsAddedToUser.push(studyProgramme);
+    userToUpdate.studyProgrammes.forEach((userStudyProgramme) => {
+      if (userStudyProgramme === studyProgramme) return checkIfStudyProgrammeIsAddedToUser.push(studyProgramme);
     });
   });
 
@@ -143,19 +157,35 @@ export const updateUserWithStudyplan = async (req, res, next) => {
       }),
     );
 
+  // studyProgrammes that will be added to user
   const studyProgrammes = studyProgrammeCode.filter((studyProgramme) =>
-    checkUser.studyProgrammes.filter((data) => studyProgramme !== data),
+    userToUpdate.studyProgrammes.filter((data) => studyProgramme !== data),
   );
 
-  const test = checkStudyProgramme.filter((data) => data.studyProgrammeCode === studyProgrammes[0]);
+  // Filter to get studyProgramme data
+  const studyProgramme = checkStudyProgramme.filter((data) => data.studyProgrammeCode === studyProgrammes[0]);
+
+  // Update default studyProgrammeCode and year on user if studyProgrammes is empty else update studyprogrammes on user
+  // Generate new JWT with updated information
   let jwtToken;
-  checkUser.studyProgrammes.length === 0
+  userToUpdate.studyProgrammes.length === 0
     ? await userModel
         .updateOne(
           { username },
-          { $push: { studyProgrammes }, programmeCode: test[0].studyProgrammeCode, year: test[0].year },
+          {
+            $push: { studyProgrammes },
+            programmeCode: studyProgramme[0].studyProgrammeCode,
+            year: studyProgramme[0].year,
+          },
         )
-        .then((jwtToken = generateJwtToken(user, test[0].studyProgrammeCode, test[0].year, studyProgrammes)))
+        .then(
+          (jwtToken = generateJwtToken(
+            user,
+            studyProgramme[0].studyProgrammeCode,
+            studyProgramme[0].year,
+            studyProgrammes,
+          )),
+        )
     : await userModel.updateOne({ username }, { $push: { studyProgrammes } });
 
   res.status(201).json({
