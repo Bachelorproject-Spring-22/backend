@@ -33,11 +33,9 @@ GET /                                       | Current semester course name, code
 GET /:courseId                              | Course leaderboard top 3, individual quiz results
 POST /:courseId                             | Input: startDate, endDate
 
-ROUTE Upload '/upload'
-POST /upload                                | Input: File && courseId
-GET /upload                                 | Get course ids from admin user
-
 ROUTE Manage '/manage'
+POST /                                      | Input: File && courseId
+GET /                                       | Get course ids from admin user
 POST /programme                             | Input: array of studyProgrammeCode(s)
 DELETE /courses/:courseId/:quizId'          | Params: courseId && quizId
 
