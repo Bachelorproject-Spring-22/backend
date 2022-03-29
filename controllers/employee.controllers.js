@@ -74,62 +74,6 @@ export const quizUpload = async (req, res, next) => {
   res.status(201).json({ message: 'Quiz uploaded successfully' });
 };
 
-export const getUserSpecificCourseAndStudyprogrammeCode = async (req, res, next) => {
-  const user = req.user;
-  const studyProgrammeCode = user.studyProgrammes;
-
-  if (!user) next(createNotFound('User not found'));
-  if (!user.studyProgrammes) next(createNotFound('StudyProgrammes not found'));
-
-  let studyProgrammeCodes = [];
-  let periodNumbers = [];
-
-  // Calculate current semester for each studyprogramme the user has subscribed to
-  studyProgrammeCode.forEach((code) => {
-    let filterOutString = code.match(/\d+/g);
-    let createYear = `20${filterOutString}`;
-    let periodNumber = calculateSemester(createYear);
-
-    studyProgrammeCodes.push({ studyProgrammeCode: code, periodNumber });
-    periodNumbers.push(periodNumber);
-  });
-
-  // Fetch courses from each studyplan current semester
-  const studyProgrammeData = await studyProgrammeModel.aggregate([
-    { $match: { studyProgrammeCode: { $in: studyProgrammeCode } } },
-    { $unwind: '$studyPeriods' },
-    { $match: { 'studyPeriods.periodNumber': { $in: periodNumbers } } },
-    { $unwind: '$studyPeriods.courses' },
-    {
-      $lookup: {
-        from: 'courses',
-        localField: 'studyPeriods.courses',
-        foreignField: '_id',
-        as: 'coursesInPeriod',
-      },
-    },
-    { $unwind: '$coursesInPeriod' },
-  ]);
-
-  const courses = [];
-
-  // Check if user studyProgramme and fetched studyprogramme is matching then push coursesInPeriod for current semester
-  studyProgrammeCodes.forEach((userStudyProgramme) =>
-    studyProgrammeData.forEach(
-      (fetchedStudyProgramme) =>
-        userStudyProgramme.studyProgrammeCode === fetchedStudyProgramme.studyProgrammeCode &&
-        userStudyProgramme.periodNumber === fetchedStudyProgramme.studyPeriods.periodNumber &&
-        courses.push(fetchedStudyProgramme.coursesInPeriod),
-    ),
-  );
-
-  // Filter out unique course ids from user subscribed studyplans (Same course can be added to different studyplans)
-  const unique = getUniqueObjecs(courses, 'courseId');
-  const courseIds = unique.map((course) => createCourseObject(course));
-
-  res.status(201).json({ message: 'CourseId(s) found', courseIds });
-};
-
 export const updateUserWithStudyplan = async (req, res, next) => {
   const { studyProgrammeCode } = req.body;
   const user = req.user;
@@ -234,6 +178,7 @@ export const getAllStudyPlans = async (req, res, next) => {
   const user = req.user;
   if (!user) return next(createNotFound('User not found'));
 
+  // fetch all studyProgrammes from the database
   const studyProgrammeCodes = await studyProgrammeModel.find({}, { studyProgrammeCode: 1, _id: 0 });
   if (!studyProgrammeCodes) return next(createNotFound('Studyprogrammes not found'));
 
@@ -245,26 +190,29 @@ export const getAllStudyPlans = async (req, res, next) => {
 
 export const getUserSpecificCourse = async (req, res, next) => {
   const user = req.user;
-  if (!user) return next(createNotFound('User not found'));
-
   const studyProgrammeCode = user.studyProgrammes;
+
+  if (!user) next(createNotFound('User not found'));
   if (!user.studyProgrammes) next(createNotFound('StudyProgrammes not found'));
 
-  let codes = [];
-  let number = [];
+  let studyProgrammeCodes = [];
+  let periodNumbers = [];
 
+  // Calculate current semester for each studyprogramme the user has subscribed to
   studyProgrammeCode.forEach((code) => {
-    let filterOutstring = code.match(/\d+/g);
-    let createYear = `20${filterOutstring}`;
+    let filterOutString = code.match(/\d+/g);
+    let createYear = `20${filterOutString}`;
     let periodNumber = calculateSemester(createYear);
-    codes.push({ studyProgrammeCode: code, periodNumber });
-    number.push(periodNumber);
+
+    studyProgrammeCodes.push({ studyProgrammeCode: code, periodNumber });
+    periodNumbers.push(periodNumber);
   });
 
+  // Fetch courses from each studyplan current semester
   const studyProgrammeData = await studyProgrammeModel.aggregate([
     { $match: { studyProgrammeCode: { $in: studyProgrammeCode } } },
     { $unwind: '$studyPeriods' },
-    { $match: { 'studyPeriods.periodNumber': { $in: number } } },
+    { $match: { 'studyPeriods.periodNumber': { $in: periodNumbers } } },
     { $unwind: '$studyPeriods.courses' },
     {
       $lookup: {
@@ -276,31 +224,39 @@ export const getUserSpecificCourse = async (req, res, next) => {
     },
     { $unwind: '$coursesInPeriod' },
   ]);
-  const array = [];
-  codes.forEach((code) =>
+
+  const courses = [];
+
+  // Check if user studyProgramme and fetched studyprogramme is matching then push coursesInPeriod for current semester
+  studyProgrammeCodes.forEach((userStudyProgramme) =>
     studyProgrammeData.forEach(
-      (data) =>
-        code.studyProgrammeCode === data.studyProgrammeCode &&
-        code.periodNumber === data.studyPeriods.periodNumber &&
-        array.push(data.coursesInPeriod),
+      (fetchedStudyProgramme) =>
+        userStudyProgramme.studyProgrammeCode === fetchedStudyProgramme.studyProgrammeCode &&
+        userStudyProgramme.periodNumber === fetchedStudyProgramme.studyPeriods.periodNumber &&
+        courses.push(fetchedStudyProgramme.coursesInPeriod),
     ),
   );
-  const unique = getUniqueObjecs(array, 'courseId');
-  const courses = unique.map((course) => createCourseObject(course, 'course'));
-  res.status(201).json({ message: 'CourseId(s) found', courses });
+
+  // Filter out unique course ids from user subscribed studyplans (Same course can be added to different studyplans)
+  const unique = getUniqueObjecs(courses, 'courseId');
+  const courseIds = unique.map((course) => createCourseObject(course));
+
+  res.status(201).json({ message: 'CourseId(s) found', courseIds });
 };
 
 export const getUserSpecificCourseAndQuiz = async (req, res, next) => {
   const { courseId } = req.params;
   const user = req.user;
-  if (!user) return next(createNotFound('User not found'));
-
   const studyProgrammeCode = user.studyProgrammes;
+
+  if (!courseId) return next(createNotFound('Course not found'));
+  if (!user) return next(createNotFound('User not found'));
   if (!user.studyProgrammes) next(createNotFound('StudyProgrammes not found'));
 
   let codes = [];
   let number = [];
 
+  // Calculate current semester for each studyprogramme the user has subscribed to
   studyProgrammeCode.forEach((code) => {
     let filterOutstring = code.match(/\d+/g);
     let createYear = `20${filterOutstring}`;
@@ -309,6 +265,7 @@ export const getUserSpecificCourseAndQuiz = async (req, res, next) => {
     number.push(periodNumber);
   });
 
+  // Fetch courses and quizzes from each studyplan current semester
   const studyProgrammeData = await studyProgrammeModel.aggregate([
     { $match: { studyProgrammeCode: { $in: studyProgrammeCode } } },
     { $unwind: '$studyPeriods' },
@@ -339,26 +296,30 @@ export const getUserSpecificCourseAndQuiz = async (req, res, next) => {
     { $unwind: '$kahootsInPeriod' },
   ]);
 
-  const array = [];
-  const arr = [];
+  const courseArray = [];
+  const quizArray = [];
+  // Check if user studyProgramme and fetched studyprogramme is matching then push coursesInPeriod for current semester
   codes.forEach((code) =>
     studyProgrammeData.forEach(
       (data) =>
         code.studyProgrammeCode === data.studyProgrammeCode &&
         code.periodNumber === data.studyPeriods.periodNumber &&
-        array.push(data.coursesInPeriod) &&
-        arr.push(data.kahootsInPeriod),
+        courseArray.push(data.coursesInPeriod) &&
+        quizArray.push(data.kahootsInPeriod),
     ),
   );
-  // sort out unique courses from all studyProgrammes
-  const uniqueCourses = getUniqueObjecs(array, 'courseId');
+  // Sort out unique courses from all studyProgrammes
+  const uniqueCourses = getUniqueObjecs(courseArray, 'courseId');
   const courses = uniqueCourses.map((course) => createCourseObject(course));
 
-  // sort out all unique quizzes from all studyProgrammes
-  const uniqueQuizzes = getUniqueObjecs(arr, 'quizId');
+  // Sort out all unique quizzes from all studyProgrammes
+  const uniqueQuizzes = getUniqueObjecs(quizArray, 'quizId');
   const quizzes = uniqueQuizzes.map((quiz) => createQuizObject(quiz));
-  res.status(201).json({ message: 'Course and quiz information found', courses: courses[0], quizzes });
+
+  res.status(201).json({ message: 'Course and quiz information found', courses, quizzes });
 };
+
+// Helper functions
 
 //https://reactgo.com/removeduplicateobjects/
 const getUniqueObjecs = (arr, comp) => {
