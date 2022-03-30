@@ -6,6 +6,7 @@ import {
   getAllStudyPlans,
   getUserSpecificCourse,
   getUserSpecificCourseAndQuiz,
+  removeUserFromStudyplan,
 } from '../controllers/employee.controllers.js';
 import asyncMiddleware from '../middleware/async.middleware.js';
 
@@ -39,6 +40,7 @@ router.get('/', asyncMiddleware(getUserSpecificCourse));
 
 router.get('/programme', asyncMiddleware(getAllStudyPlans));
 router.post('/programme', asyncMiddleware(updateUserWithStudyplan));
+router.delete('/programme', asyncMiddleware(removeUserFromStudyplan));
 
 router.get('/courses', asyncMiddleware(getUserSpecificCourse));
 router.get('/courses/:courseId', asyncMiddleware(getUserSpecificCourseAndQuiz));
