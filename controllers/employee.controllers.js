@@ -110,31 +110,60 @@ export const updateUserWithStudyplan = async (req, res, next) => {
   const studyProgramme = checkStudyProgramme.filter((data) => data.studyProgrammeCode === studyProgrammes[0]);
 
   // Update default studyProgrammeCode and year on user if studyProgrammes is empty else update studyprogrammes on user
-  // Generate new JWT with updated information
-  let jwtToken;
   userToUpdate.studyProgrammes.length === 0
-    ? await userModel
-        .updateOne(
-          { username },
-          {
-            $push: { studyProgrammes },
-            programmeCode: studyProgramme[0].studyProgrammeCode,
-            year: studyProgramme[0].year,
-          },
-        )
-        .then(
-          (jwtToken = generateJwtToken(
-            user,
-            studyProgramme[0].studyProgrammeCode,
-            studyProgramme[0].year,
-            studyProgrammes,
-          )),
-        )
+    ? await userModel.updateOne(
+        { username },
+        {
+          $push: { studyProgrammes },
+          programmeCode: studyProgramme[0].studyProgrammeCode,
+          year: studyProgramme[0].year,
+        },
+      )
     : await userModel.updateOne({ username }, { $push: { studyProgrammes } });
 
-  res.status(201).json({
-    message: `Courses added successfully [${studyProgrammes}]`,
-    jwtToken,
+  // have to do this because of refresh token
+  // need to update jwt
+  res.status(204).json({ error: 'Removed' });
+};
+
+export const removeUserFromStudyplan = async (req, res, next) => {
+  const { studyProgrammeCode } = req.body;
+  const user = req.user;
+  const { username } = user;
+
+  if (!studyProgrammeCode) return next(createNotFound('StudyProgramme not found'));
+
+  const userToUpdate = await userModel.findOne({ username }, { studyProgrammes: 1 }).sort({ _id: 1 }).lean();
+  if (!userToUpdate) return next(createBadRequest('User does not exist'));
+
+  const checkStudyProgramme = await studyProgrammeModel.find({ studyProgrammeCode }).lean();
+  if (checkStudyProgramme.length === 0) return next(createBadRequest('Studyplan(s) does not exist'));
+
+  const removeFromUser = [];
+  const array = [];
+  studyProgrammeCode.forEach((studyProgramme) => {
+    userToUpdate.studyProgrammes.forEach((userStudyProgramme) => {
+      if (userStudyProgramme === studyProgramme) return removeFromUser.push(userStudyProgramme);
+      if (userStudyProgramme !== studyProgramme) return array.push(userStudyProgramme);
+    });
+  });
+
+  if (removeFromUser.length === 0) return next(createBadRequest('No studyProgrammes to remove'));
+
+  // Update default studyProgrammeCode and year on user if studyProgrammes is empty else update studyprogrammes on user
+  array.length === 0
+    ? await userModel.updateOne(
+        { username },
+        {
+          $set: { programmeCode: null, year: null, studyProgrammes: [] },
+        },
+      )
+    : await userModel.updateOne({ username }, { $set: { studyProgrammes: array } });
+
+  // have to do this because of refresh token
+  // need to update jwt
+  res.status(204).json({
+    error: 'Removed',
   });
 };
 
