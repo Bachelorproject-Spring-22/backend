@@ -1,3 +1,13 @@
+
+/***************************************************************************************
+ *    Title: backend/controllers/auth.controller.js
+ *    Author: Cornelius Sandmæl, Glenn Hansen, Tom Schrier
+ *    Date: 13.05.2021
+ *    Code version: 1.o
+ *    Availability: https://github.com/Webproject-exam/backend/blob/main/auth/user.auth.js
+ *
+ ***************************************************************************************/
+
 import passport from 'passport';
 import { Strategy, ExtractJwt } from 'passport-jwt';
 
