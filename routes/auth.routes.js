@@ -28,6 +28,14 @@ router.post('/revoke', authorize(), asyncMiddleware(revokeToken));
 
 export default router;
 
+/*
+ * @Author Cornflourblue
+ * @Date June 17 2020
+ * @Title Node.js + MongoDB API - JWT Authentication with Refresh Tokens
+ * @Type Forum post code
+ * @URL = https://jasonwatmore.com/post/2020/06/17/nodejs-mongodb-api-jwt-authentication-with-refresh-tokens
+ */
+
 // Validate payload to ensure request body is valid
 function authenticateSchema(req, _, next) {
   const schema = Joi.object({
