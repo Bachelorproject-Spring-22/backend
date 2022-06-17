@@ -1,0 +1,336 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "uniLeague",
+    "description": "Description of uniLeague",
+    "termsOfService": "http://swagger.io/terms/",
+    "contact": {
+      "email": "apiteam@swagger.io"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000/",
+      "description": "Local development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authenticate",
+      "description": "Everything authentication"
+    },
+    {
+      "name": "Home",
+      "description": "Everything student"
+    },
+    {
+      "name": "Leaderboard",
+      "description": "Everything teacher"
+    },
+    {
+      "name": "Super Admin",
+      "description": "Everything super admin"
+    }
+  ],
+  "paths": {
+    "/api/v1/login": {
+      "post": {
+        "tags": ["Authenticate"],
+        "summary": "User login",
+        "operationId": "UserLogin",
+        "requestBody": {
+          "description": "Authenticate an user to use uniLeague",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLogin"
+              }
+            },
+            "application/xml": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLogin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "User logged in successfully",
+            "headers": {
+              "Set-Cookie": {
+                "description": "`refreshToken`",
+                "schema": {
+                  "type": "string",
+                  "example": "refreshToken=51872eca5efedcf424db4cf5afd16a9d00ad25b743a034c9c221afc85d18dcd5e4ad6e3f08607550"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "User logged in successfully"
+                    },
+                    "role": {
+                      "type": "string",
+                      "example": "superAdmin"
+                    },
+                    "jwtToken": {
+                      "type": "string",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MjI3ODUxNDVmZDQ4MGViN2MzMjQ4N2QiLCJyb2xlIjoic3VwZXJBZG1pbiIsInVzZXJuYW1lIjoiZXhhbXBsZSIsInN0dWR5UHJvZ3JhbW1lQ29kZSI6IkJBQ0hNQVNURVIyMCIsInBlcmlvZE51bWJlciI6NiwiaWF0IjoxNjU1NDcxNjE1LCJleHAiOjE2NTU0NzI1MTV9.ozs7aTsq0_4shaHxOFjQQdn064WQILV-chl-ohXCAOM"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request, either wrong email and/or password. Please try again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Wrong email and/or password. Please try again."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "There is an server-side error, please try again later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerSideError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-codegen-request-body-name": "body"
+    },
+    "/api/v1/refresh": {
+      "post": {
+        "tags": ["Authenticate"],
+        "summary": "Use a refresh token to generate a new JWT access token and a new refresh token",
+        "description": "The refresh token is sent and returned via cookies.",
+        "operationId": "refreshToken",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "refreshToken",
+            "description": "The `refreshToken` cookie",
+            "schema": {
+              "type": "string",
+              "example": "51872eca5efedcf424db4cf5afd16a9d00ad25b743a034c9c221afc85d18dcd5e4ad6e3f08607550"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User logged in successfully",
+            "headers": {
+              "Set-Cookie": {
+                "description": "`refreshToken`",
+                "schema": {
+                  "type": "string",
+                  "example": "refreshToken=51872eca5efedcf424db4cf5afd16a9d00ad25b743a034c9c221afc85d18dcd5e4ad6e3f08607550"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Token refreshed successfully"
+                    },
+                    "user": {
+                      "type": "string",
+                      "example": "example"
+                    },
+                    "jwtToken": {
+                      "type": "string",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MjI3ODUxNDVmZDQ4MGViN2MzMjQ4N2QiLCJyb2xlIjoic3VwZXJBZG1pbiIsInVzZXJuYW1lIjoiZXhhbXBsZSIsInN0dWR5UHJvZ3JhbW1lQ29kZSI6IkJBQ0hNQVNURVIyMCIsInBlcmlvZE51bWJlciI6NiwiaWF0IjoxNjU1NDcxNjE1LCJleHAiOjE2NTU0NzI1MTV9.ozs7aTsq0_4shaHxOFjQQdn064WQILV-chl-ohXCAOM"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "If no user in refreshToken then return unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Unauthorized."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "There is an server-side error, please try again later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerSideError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-codegen-request-body-name": "body"
+    },
+    "/api/v1/home": {
+      "post": {
+        "tags": ["Home"],
+        "summary": "Fetch attended courses and show placement on leaderboard",
+        "description": "The refresh token is sent and returned via cookies.",
+        "operationId": "refreshToken",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "refreshToken",
+            "description": "The `refreshToken` cookie",
+            "schema": {
+              "type": "string",
+              "example": "51872eca5efedcf424db4cf5afd16a9d00ad25b743a034c9c221afc85d18dcd5e4ad6e3f08607550"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User logged in successfully",
+            "headers": {
+              "Set-Cookie": {
+                "description": "`refreshToken`",
+                "schema": {
+                  "type": "string",
+                  "example": "refreshToken=51872eca5efedcf424db4cf5afd16a9d00ad25b743a034c9c221afc85d18dcd5e4ad6e3f08607550"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Token refreshed successfully"
+                    },
+                    "user": {
+                      "type": "string",
+                      "example": "example"
+                    },
+                    "jwtToken": {
+                      "type": "string",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MjI3ODUxNDVmZDQ4MGViN2MzMjQ4N2QiLCJyb2xlIjoic3VwZXJBZG1pbiIsInVzZXJuYW1lIjoiZXhhbXBsZSIsInN0dWR5UHJvZ3JhbW1lQ29kZSI6IkJBQ0hNQVNURVIyMCIsInBlcmlvZE51bWJlciI6NiwiaWF0IjoxNjU1NDcxNjE1LCJleHAiOjE2NTU0NzI1MTV9.ozs7aTsq0_4shaHxOFjQQdn064WQILV-chl-ohXCAOM"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "If no user in refreshToken then return unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Unauthorized."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "There is an server-side error, please try again later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerSideError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-codegen-request-body-name": "body"
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "required": ["username", "password"],
+        "properties": {
+          "username": { "type": "string", "unique": true, "lowercase": true, "trim": true },
+          "email": { "type": "string", "trim": true, "lowercase": true },
+          "password": { "type": "string" },
+          "role": {
+            "type": "string",
+            "description": "Which role the user has",
+            "trim": true,
+            "enum": ["student", "teacher", "superAdmin"]
+          },
+          "programmeCode": { "type": "string", "trim": true, "uppercase": true },
+          "year": { "type": "number", "trim": true }
+        },
+        "xml": {
+          "name": "User"
+        }
+      },
+      "UserLogin": {
+        "required": ["username", "password"],
+        "type": "object",
+        "properties": {
+          "username": { "type": "string" },
+          "password": { "type": "string" }
+        },
+        "xml": {
+          "name": "User"
+        }
+      },
+      "ServerSideError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "There is an server-side error, please try again later."
+          }
+        }
+      }
+    },
+    "securitySchemas": {
+      "refreshToken": {
+        "type": "apiKey",
+        "name": "refreshToken",
+        "in": "cookie"
+      }
+    }
+  }
+}

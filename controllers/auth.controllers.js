@@ -105,13 +105,26 @@ export const revokeToken = async (req, res, next) => {
 // helper functions
 function setTokenCookie(res, token) {
   // Create cookie with refresh token that expires in 7 days
-  //@DEPLOYCOOKIE
-  const cookieOptions = {
-    httpOnly: true,
-    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    secure: true,
-    sameSite: 'none',
-  };
+  let cookieOptions;
+
+  if (process.env.NODE_ENV === 'production') {
+    //@DEPLOYCOOKIE
+    cookieOptions = {
+      httpOnly: true,
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      secure: true,
+      sameSite: 'none',
+    };
+  }
+
+  if(process.env.NODE_ENV === 'development'){
+    //@DEVELOPMENTCOOKIE
+    cookieOptions = {
+      httpOnly: true,
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      secure: false,
+    };
+  }
   res.cookie('refreshToken', token, cookieOptions);
 }
 

@@ -8,6 +8,7 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import helmet from 'helmet';
+import swaggerUi from 'swagger-ui-express';
 import { connectToMongoDB } from './config/mongoose.js ';
 
 // Config
@@ -67,7 +68,7 @@ async function bootstrap() {
     res.status(error.status || 500);
     res.json({
       error: {
-        message: error.message,
+        message: "There is an server-side error, please try again later.",
       },
     });
   });
